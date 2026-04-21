@@ -165,7 +165,23 @@
   .badge.zhub { background:rgba(245,158,11,0.15); color:#fcd34d; border:1px solid rgba(245,158,11,0.3); }
   .badge.mercy { background:rgba(16,185,129,0.15); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
 
-  /* Action btns */
+  /* Section divider in modal */
+  .section-divider {
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px;
+    color:var(--text3); padding:16px 0 12px;
+    border-top:1px solid var(--border); margin-bottom:4px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .section-divider::after {
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+
+  /* Bill status badges */
+  .badge.INVOICED { background:rgba(6,182,212,0.15); color:#67e8f9; border:1px solid rgba(6,182,212,0.3); }
+  .badge.PARTIAL  { background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); }
+  .badge.PAID     { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
+  .badge.SIGNED   { background:rgba(139,92,246,0.15); color:#c4b5fd; border:1px solid rgba(139,92,246,0.3); }
+  .badge.SCANNED  { background:rgba(16,185,129,0.15); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
   .action-btns { display:flex; gap:8px; }
   .btn-edit, .btn-del {
     width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
@@ -768,6 +784,58 @@
           <textarea id="f-note" placeholder="Ghi thêm thông tin liên hệ, lịch sử nói chuyện..."></textarea>
         </div>
       </div>
+
+      <!-- BILL & CONTRACT DIVIDER -->
+      <div class="section-divider">Thanh toán & Hợp đồng</div>
+
+      <div class="form-row three">
+        <div>
+          <label>Trạng thái bill</label>
+          <select id="f-bill-status">
+            <option value="">Chưa xuất</option>
+            <option value="INVOICED">Đã xuất bill</option>
+            <option value="PARTIAL">Đã TT 1 phần</option>
+            <option value="PAID">Đã TT đủ</option>
+          </select>
+        </div>
+        <div>
+          <label>Số invoice / mã HĐ</label>
+          <input id="f-invoice-no" placeholder="VD: INV-2504-001">
+        </div>
+        <div>
+          <label>Ngày thanh toán</label>
+          <input id="f-payment-date" type="date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Số tiền đã thu (₫)</label>
+          <input id="f-amount-paid" type="number" placeholder="0" oninput="calcRemaining()">
+        </div>
+        <div>
+          <label>Còn lại phải thu</label>
+          <input id="f-amount-remaining" readonly style="color:var(--hot);cursor:not-allowed">
+        </div>
+      </div>
+
+      <div class="form-row three">
+        <div>
+          <label>Trạng thái hợp đồng</label>
+          <select id="f-contract-status">
+            <option value="">Chưu có</option>
+            <option value="SIGNED">Đã ký (chưa scan)</option>
+            <option value="SCANNED">Đã scan / có file</option>
+          </select>
+        </div>
+        <div>
+          <label>Link HĐ (Google Drive)</label>
+          <input id="f-contract-url" placeholder="https://drive.google.com/...">
+        </div>
+        <div>
+          <label>Ngày ký HĐ</label>
+          <input id="f-contract-date" type="date">
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Hủy</button>
@@ -979,6 +1047,14 @@ function calcContribution() {
   document.getElementById('f-commission').value = fmtFull(Math.round(price * 0.20));
 }
 
+function calcRemaining() {
+  const price = parseInt(document.getElementById('f-price').value) || 0;
+  const paid = parseInt(document.getElementById('f-amount-paid').value) || 0;
+  const remaining = Math.max(0, price - paid);
+  document.getElementById('f-amount-remaining').value = remaining > 0 ? fmtFull(remaining) : 'Đã thu đủ';
+  document.getElementById('f-amount-remaining').style.color = remaining > 0 ? 'var(--hot)' : 'var(--won)';
+}
+
 function getProductGroup(pkg) {
   if(!pkg) return '';
   const p = pkg.split('|')[0] || '';
@@ -1015,6 +1091,20 @@ function renderTable() {
     const stageClass = c.stage === 'WON' ? 'WON' : c.stage === 'LOST' ? 'LOST' : c.stage === 'PROPOSAL' ? 'PROPOSAL' : c.stage === 'NEGOTIATION' ? 'NEGOTIATION' : c.stage;
     const deadline = c.deadline ? new Date(c.deadline).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}) : '—';
     const isOverdue = c.deadline && new Date(c.deadline) < new Date() && c.stage !== 'WON' && c.stage !== 'LOST';
+    const billLabel = {INVOICED:'Đã xuất bill',PARTIAL:'Đã TT 1 phần',PAID:'Đã TT đủ'};
+    const contractLabel = {SIGNED:'Đã ký',SCANNED:'Đã scan'};
+    const billBadge = c.billStatus
+      ? `<span class="badge ${c.billStatus}">${billLabel[c.billStatus]}</span>`
+      : `<span style="font-size:11px;color:var(--text3)">Chưa xuất</span>`;
+    const contractBadge = c.contractStatus
+      ? (c.contractUrl
+          ? `<a href="${c.contractUrl}" target="_blank" style="text-decoration:none"><span class="badge ${c.contractStatus}">${contractLabel[c.contractStatus]} ↗</span></a>`
+          : `<span class="badge ${c.contractStatus}">${contractLabel[c.contractStatus]}</span>`)
+      : `<span style="font-size:11px;color:var(--text3)">Chưa có</span>`;
+    const amtPaid = c.amountPaid || 0;
+    const remaining = price - amtPaid;
+    const paidInfo = amtPaid > 0 ? `<div style="font-size:10px;color:var(--text3)">Thu: ${fmt(amtPaid)} / Còn: ${fmt(remaining > 0 ? remaining : 0)}</div>` : '';
+
     return `
     <tr>
       <td>
@@ -1029,7 +1119,14 @@ function renderTable() {
       </td>
       <td><span class="badge ${stageClass}">${c.stage||'—'}</span></td>
       <td><span style="font-size:13px">${c.owner||'—'}</span></td>
-      <td style="max-width:180px;font-size:12px;color:var(--text2)">${c.next||'—'}</td>
+      <td>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${billBadge}
+          ${contractBadge}
+          ${paidInfo}
+        </div>
+      </td>
+      <td style="max-width:160px;font-size:12px;color:var(--text2)">${c.next||'—'}</td>
       <td><span style="font-size:12px;color:${isOverdue?'var(--hot)':'var(--text2)'}">${deadline}</span></td>
       <td>
         <div class="action-btns">
@@ -1190,6 +1287,14 @@ function openModal(id) {
     document.getElementById('f-pain').value = c.pain||'';
     document.getElementById('f-note').value = c.note||'';
     document.getElementById('f-period').value = c.period||'P2';
+    document.getElementById('f-bill-status').value = c.billStatus||'';
+    document.getElementById('f-invoice-no').value = c.invoiceNo||'';
+    document.getElementById('f-payment-date').value = c.paymentDate||'';
+    document.getElementById('f-amount-paid').value = c.amountPaid||'';
+    document.getElementById('f-contract-status').value = c.contractStatus||'';
+    document.getElementById('f-contract-url').value = c.contractUrl||'';
+    document.getElementById('f-contract-date').value = c.contractDate||'';
+    calcRemaining();
   } else {
     document.getElementById('f-name').value='';
     document.getElementById('f-industry').value='';
@@ -1209,6 +1314,14 @@ function openModal(id) {
     document.getElementById('f-custom-name').value='';
     document.getElementById('f-custom-name').style.display='none';
     document.getElementById('f-period').value = currentPeriod;
+    document.getElementById('f-bill-status').value='';
+    document.getElementById('f-invoice-no').value='';
+    document.getElementById('f-payment-date').value='';
+    document.getElementById('f-amount-paid').value='';
+    document.getElementById('f-amount-remaining').value='';
+    document.getElementById('f-contract-status').value='';
+    document.getElementById('f-contract-url').value='';
+    document.getElementById('f-contract-date').value='';
   }
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -1252,6 +1365,14 @@ function saveClient() {
     deadline: document.getElementById('f-deadline').value,
     pain: document.getElementById('f-pain').value,
     note: document.getElementById('f-note').value,
+    // Bill & Contract
+    billStatus: document.getElementById('f-bill-status').value,
+    invoiceNo: document.getElementById('f-invoice-no').value,
+    paymentDate: document.getElementById('f-payment-date').value,
+    amountPaid: parseInt(document.getElementById('f-amount-paid').value)||0,
+    contractStatus: document.getElementById('f-contract-status').value,
+    contractUrl: document.getElementById('f-contract-url').value.trim(),
+    contractDate: document.getElementById('f-contract-date').value,
     updatedAt: new Date().toISOString()
   };
 
