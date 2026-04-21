@@ -414,6 +414,57 @@
   .week-badge.done { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
   .week-badge.upcoming { background:rgba(255,255,255,0.05); color:var(--text3); border:1px solid var(--border); }
   @media(max-width:768px) { .week-grid { grid-template-columns:repeat(2,1fr); } }
+
+  /* Kanban Board */
+  .kanban-controls { display:flex; gap:12px; margin-bottom:16px; align-items:center; }
+  .view-btn {
+    background: transparent; border: 1px solid transparent; border-radius: 8px;
+    padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+    color: var(--text3); transition: all 0.2s; font-family: inherit; display:flex; align-items:center; gap:6px;
+  }
+  .view-btn.active { background: var(--bg3); border-color: var(--border); color: var(--text); }
+  .view-btn:not(.active):hover { color: var(--text); }
+  
+  .kanban-board {
+    display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px;
+    min-height: 500px; scroll-behavior: smooth;
+  }
+  .kanban-col {
+    min-width: 280px; width: 280px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .kanban-header {
+    padding: 12px 16px; border-bottom: 2px solid var(--border); background: var(--bg2);
+    font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .kanban-header .count {
+    font-size:11px; background:var(--card); font-weight:600; padding:2px 8px; border-radius:12px; color:var(--text2);
+  }
+  .kanban-header.HOT { border-bottom-color: var(--hot); }
+  .kanban-header.WARM { border-bottom-color: var(--warm); }
+  .kanban-header.PROPOSAL { border-bottom-color: var(--accent2); }
+  .kanban-header.NEGOTIATION { border-bottom-color: var(--warm); /* orange */ }
+  .kanban-header.WON { border-bottom-color: var(--won); }
+  .kanban-header.LOST { border-bottom-color: var(--lost); }
+  .kanban-cards {
+    padding: 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; height: 100%; min-height:100px;
+  }
+  .k-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; cursor: grab; position: relative; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  }
+  .k-card:active { cursor: grabbing; opacity: 0.8; transform: scale(0.98); }
+  .k-card:hover { border-color: var(--text3); }
+  .k-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; color:var(--text); }
+  .k-sub { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+  .k-tags { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap:wrap; }
+  .k-price { font-size: 12px; font-weight: 700; color: var(--won); }
+  .k-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 10px; }
+  .k-owner { font-size: 10px; background: var(--card); border: 1px solid var(--border); color:var(--text2); padding: 2px 6px; border-radius: 4px; font-weight:600; }
+  .k-deadline { font-size: 10px; color: var(--text3); display:flex; align-items:center; gap:4px;}
+  .k-deadline.overdue { color: var(--hot); font-weight: 700; }
+  .k-deadline.today { color: var(--warm); font-weight: 700; }
+  .drag-over { background: rgba(124,58,237,0.05); border: 1px dashed var(--accent2) !important; }
 </style>
 </head>
 <body>
@@ -494,16 +545,37 @@
     <!-- TIẾN ĐỘ & NHẮC VIỆC -->
     <div id="progressBox" style="margin-bottom:20px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;"></div>
 
-    <div class="toolbar">
+    <div class="kanban-controls">
+      <button id="btnViewKanban" class="view-btn active" onclick="switchViewType('kanban')">🗂️ Kanban</button>
+      <button id="btnViewTable" class="view-btn" onclick="switchViewType('table')">📄 Listing</button>
+      <div style="width:1px; height:20px; background:var(--border); margin:0 8px;"></div>
+      <div style="font-size:12px; color:var(--text3); display:flex; align-items:center; gap:8px;">
+        Role Demo:
+        <select id="roleMock" onchange="renderTable()" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; outline:none;">
+          <option value="ALL">Admin (Thấy mọi data)</option>
+          <option value="Hường">Sale: Hường</option>
+          <option value="Trang">Sale: Trang</option>
+          <option value="Vũ">Sale: Vũ</option>
+        </select>
+      </div>
+      <button class="add-btn" onclick="openModal()" style="margin-left:auto;">+ Thêm khách</button>
+    </div>
+
+    <!-- Toolbar cho Bảng -->
+    <div class="toolbar" id="tableToolbar" style="display:none; margin-top:16px;">
       <input class="search-box" id="searchBox" placeholder="Tìm kiếm tên khách, ngành hàng..." oninput="renderTable()">
       <button class="filter-btn" id="f-ALL" onclick="setFilter('ALL')">Tất cả</button>
       <button class="filter-btn HOT" id="f-HOT" onclick="setFilter('HOT')">HOT</button>
       <button class="filter-btn WARM" id="f-WARM" onclick="setFilter('WARM')">WARM</button>
       <button class="filter-btn COLD" id="f-COLD" onclick="setFilter('COLD')">COLD</button>
       <button class="filter-btn" id="f-WON" onclick="setFilter('WON')">Đã chốt</button>
-      <button class="add-btn" onclick="openModal()">+ Thêm khách</button>
     </div>
-    <div class="table-wrap">
+
+    <!-- Kanban View -->
+    <div id="viewKanban" class="kanban-board"></div>
+
+    <!-- Table View -->
+    <div id="viewTable" class="table-wrap" style="display:none;">
       <table>
         <thead>
           <tr>
@@ -1201,6 +1273,11 @@ function renderTable() {
     return matchQ && matchF && matchP;
   });
 
+  const roleFilter = document.getElementById('roleMock') ? document.getElementById('roleMock').value : 'ALL';
+  if (roleFilter !== 'ALL') {
+    filtered = filtered.filter(c => c.owner === roleFilter);
+  }
+
   // Progress Calculators
   const todayDate = new Date(); todayDate.setHours(0,0,0,0);
   const now = new Date();
@@ -1247,10 +1324,162 @@ function renderTable() {
   const tbody = document.getElementById('tableBody');
   if(!filtered.length) {
     tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Chưa có khách hàng nào</div><div>Nhấn "+ Thêm khách" để bắt đầu</div></div></td></tr>`;
-    return;
+  } else {
+    tbody.innerHTML = filtered.map(c => {
+      const pkgName = (c.package||'').split('|')[0] || '—';
+      const price = parseInt((c.package||'').split('|')[1]||'0') || (c.price||0);
+      const prod = getProductKey(c);
+      const stageClass = c.stage === 'WON' ? 'WON' : c.stage === 'LOST' ? 'LOST' : c.stage === 'PROPOSAL' ? 'PROPOSAL' : c.stage === 'NEGOTIATION' ? 'NEGOTIATION' : c.stage;
+      const deadline = c.deadline ? new Date(c.deadline).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}) : '—';
+      const isOverdue = c.deadline && new Date(c.deadline) < new Date() && c.stage !== 'WON' && c.stage !== 'LOST';
+      const billLabel = {INVOICED:'Đã xuất bill',PARTIAL:'Đã TT 1 phần',PAID:'Đã TT đủ'};
+      const contractLabel = {SIGNED:'Đã ký',SCANNED:'Đã scan'};
+      const billBadge = c.billStatus
+        ? `<span class="badge ${c.billStatus}">${billLabel[c.billStatus]}</span>`
+        : `<span style="font-size:11px;color:var(--text3)">Chưa xuất</span>`;
+      const contractBadge = c.contractStatus
+        ? (c.contractUrl
+            ? `<a href="${c.contractUrl}" target="_blank" style="text-decoration:none"><span class="badge ${c.contractStatus}">${contractLabel[c.contractStatus]} ↗</span></a>`
+            : `<span class="badge ${c.contractStatus}">${contractLabel[c.contractStatus]}</span>`)
+        : `<span style="font-size:11px;color:var(--text3)">Chưa có</span>`;
+      const amtPaid = c.amountPaid || 0;
+      const remaining = price - amtPaid;
+      const paidInfo = amtPaid > 0 ? `<div style="font-size:10px;color:var(--text3)">Thu: ${fmt(amtPaid)} / Còn: ${fmt(remaining > 0 ? remaining : 0)}</div>` : '';
+
+      return `
+      <tr>
+        <td>
+          <div class="td-name">${c.name}</div>
+          <div class="td-sub">${c.industry||''} ${c.platform?'· '+c.platform:''}</div>
+        </td>
+        <td><div class="td-name">${c.platform||'—'}</div><div class="td-sub">${c.industry||''}</div></td>
+        <td><span class="badge ${prod.toLowerCase()}">${(c.package||'').split('|')[0]||'—'}</span>
+          ${c.packageDetail ? `<div class="td-sub">${c.packageDetail}</div>` : ''}
+        </td>
+        <td>
+          <div class="price-tag">${price ? fmtFull(price) : '—'}</div>
+          <div class="contribution">${price ? '+'+fmt(price*0.45)+' contribution' : ''}</div>
+        </td>
+        <td><span class="badge ${stageClass}">${c.stage||'—'}</span></td>
+        <td><span style="font-size:13px">${c.owner||'—'}</span></td>
+        <td>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            ${billBadge}
+            ${contractBadge}
+            ${paidInfo}
+          </div>
+        </td>
+        <td style="max-width:160px;font-size:12px;color:var(--text2)">${c.next||'—'}</td>
+        <td><span style="font-size:12px;color:${isOverdue?'var(--hot)':'var(--text2)'}">${deadline}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-edit" onclick="editClient('${c.id}')" title="Sửa">✏️</button>
+            <button class="btn-del" onclick="deleteClient('${c.id}')" title="Xóa">🗑️</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
   }
 
-  tbody.innerHTML = filtered.map(c => {
+  // Render Kanban
+  const stages = [
+    { key:'HOT', name:'🔥 HOT — Mới/Tiềm năng', color:'hot' },
+    { key:'WARM', name:'🌟 WARM — Đang tư vấn', color:'warm' },
+    { key:'PROPOSAL', name:'📬 PROPOSAL — Đã báo giá', color:'proposal' },
+    { key:'NEGOTIATION', name:'💬 NEGOTIATION — Ép giá', color:'negotiation' },
+    { key:'WON', name:'✅ WON — Đã chốt', color:'won' },
+    { key:'LOST', name:'❌ LOST / COLD', color:'lost' }
+  ];
+
+  const kBoard = document.getElementById('viewKanban');
+  if(kBoard) {
+    kBoard.innerHTML = stages.map(s => {
+      let stageCards = filtered.filter(c => s.key === 'LOST' ? (c.stage === 'LOST' || c.stage === 'COLD') : c.stage === s.key);
+      let cardsHtml = stageCards.map(c => {
+        const pName = (c.package||'').split('|')[0] || '—';
+        const price = parseInt((c.package||'').split('|')[1]||'0') || (c.price||0);
+        let dBadge = '';
+        if(c.deadline && (c.stage !== 'WON' && c.stage !== 'LOST' && c.stage !== 'COLD')) {
+           const d = new Date(c.deadline); d.setHours(0,0,0,0);
+           if(d.getTime() < todayDate.getTime()) dBadge = `<span class="k-deadline overdue">⏰ ${new Date(c.deadline).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'})} (Quá hạn)</span>`;
+           else if(d.getTime() === todayDate.getTime()) dBadge = `<span class="k-deadline today">⚡ Hôm nay</span>`;
+           else dBadge = `<span class="k-deadline">⏳ ${new Date(c.deadline).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'})}</span>`;
+        }
+        return `
+          <div class="k-card" draggable="true" ondragstart="drag(event, '${c.id}')" onclick="editClient('${c.id}')">
+            <div class="k-title">${c.name}</div>
+            <div class="k-sub">${c.industry||'—'} · ${c.platform||'—'}</div>
+            <div class="k-tags"><span class="badge ${getProductKey(c).toLowerCase()}">${pName}</span></div>
+            ${price ? `<div class="k-price">${fmtFull(price)}</div>` : ''}
+            <div style="font-size:11px; color:var(--text); background:var(--bg3); padding:6px 8px; border-radius:6px; margin-top:8px; border-left:2px solid var(--accent2);">${c.next||'<em>Chưa có Action...</em>'}</div>
+            <div class="k-footer">
+              <span class="k-owner">👤 ${c.owner||'?'}</span>
+              ${dBadge}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="kanban-col" ondrop="drop(event, '${s.key}')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+          <div class="kanban-header ${s.key}">
+            <span>${s.name}</span>
+            <span class="count">${stageCards.length}</span>
+          </div>
+          <div class="kanban-cards">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// Drag & Drop Logic
+function allowDrop(ev) {
+  ev.preventDefault();
+  const col = ev.target.closest('.kanban-col');
+  if(col) col.classList.add('drag-over');
+}
+function dragLeave(ev) {
+  const col = ev.target.closest('.kanban-col');
+  if(col && !col.contains(ev.relatedTarget)) col.classList.remove('drag-over');
+}
+function drag(ev, id) {
+  ev.dataTransfer.setData("id", id);
+}
+function drop(ev, stage) {
+  ev.preventDefault();
+  document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+  const id = ev.dataTransfer.getData("id");
+  const client = clients.find(c => c.id === id);
+  if(client && client.stage !== stage) {
+    if(stage === 'LOST' && client.stage !== 'COLD') client.stage = 'LOST';
+    else if(stage !== 'LOST') client.stage = stage;
+    client.updatedAt = new Date().toISOString();
+    save();
+    renderTable();
+    updateStats();
+  }
+}
+
+let currentView = 'kanban';
+function switchViewType(type) {
+  currentView = type;
+  if(type === 'kanban') {
+    document.getElementById('viewKanban').style.display = 'flex';
+    document.getElementById('viewTable').style.display = 'none';
+    document.getElementById('tableToolbar').style.display = 'none';
+    document.getElementById('btnViewKanban').classList.add('active');
+    document.getElementById('btnViewTable').classList.remove('active');
+  } else {
+    document.getElementById('viewKanban').style.display = 'none';
+    document.getElementById('viewTable').style.display = 'block';
+    document.getElementById('tableToolbar').style.display = 'flex';
+    document.getElementById('btnViewTable').classList.add('active');
+    document.getElementById('btnViewKanban').classList.remove('active');
+  }
+}
     const pkgName = (c.package||'').split('|')[0] || '—';
     const price = parseInt((c.package||'').split('|')[1]||'0') || (c.price||0);
     const prod = getProductKey(c);
@@ -1570,6 +1799,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 });
 
 // Init
+switchViewType('kanban');
 setFilter('ALL');
 setPeriod(currentPeriod);
 </script>
