@@ -1501,60 +1501,6 @@ function switchViewType(type) {
     document.getElementById('btnViewKanban').classList.remove('active');
   }
 }
-    const pkgName = (c.package||'').split('|')[0] || '—';
-    const price = parseInt((c.package||'').split('|')[1]||'0') || (c.price||0);
-    const prod = getProductKey(c);
-    const stageClass = c.stage === 'WON' ? 'WON' : c.stage === 'LOST' ? 'LOST' : c.stage === 'PROPOSAL' ? 'PROPOSAL' : c.stage === 'NEGOTIATION' ? 'NEGOTIATION' : c.stage;
-    const deadline = c.deadline ? new Date(c.deadline).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}) : '—';
-    const isOverdue = c.deadline && new Date(c.deadline) < new Date() && c.stage !== 'WON' && c.stage !== 'LOST';
-    const billLabel = {INVOICED:'Đã xuất bill',PARTIAL:'Đã TT 1 phần',PAID:'Đã TT đủ'};
-    const contractLabel = {SIGNED:'Đã ký',SCANNED:'Đã scan'};
-    const billBadge = c.billStatus
-      ? `<span class="badge ${c.billStatus}">${billLabel[c.billStatus]}</span>`
-      : `<span style="font-size:11px;color:var(--text3)">Chưa xuất</span>`;
-    const contractBadge = c.contractStatus
-      ? (c.contractUrl
-          ? `<a href="${c.contractUrl}" target="_blank" style="text-decoration:none"><span class="badge ${c.contractStatus}">${contractLabel[c.contractStatus]} ↗</span></a>`
-          : `<span class="badge ${c.contractStatus}">${contractLabel[c.contractStatus]}</span>`)
-      : `<span style="font-size:11px;color:var(--text3)">Chưa có</span>`;
-    const amtPaid = c.amountPaid || 0;
-    const remaining = price - amtPaid;
-    const paidInfo = amtPaid > 0 ? `<div style="font-size:10px;color:var(--text3)">Thu: ${fmt(amtPaid)} / Còn: ${fmt(remaining > 0 ? remaining : 0)}</div>` : '';
-
-    return `
-    <tr>
-      <td>
-        <div class="td-name">${c.name}</div>
-        <div class="td-sub">${c.industry||''} ${c.platform?'· '+c.platform:''}</div>
-      </td>
-      <td><div class="td-name">${c.platform||'—'}</div><div class="td-sub">${c.industry||''}</div></td>
-      <td><span class="badge ${prod.toLowerCase()}">${(c.package||'').split('|')[0]||'—'}</span>
-        ${c.packageDetail ? `<div class="td-sub">${c.packageDetail}</div>` : ''}
-      </td>
-      <td>
-        <div class="price-tag">${price ? fmtFull(price) : '—'}</div>
-        <div class="contribution">${price ? '+'+fmt(price*0.45)+' contribution' : ''}</div>
-      </td>
-      <td><span class="badge ${stageClass}">${c.stage||'—'}</span></td>
-      <td><span style="font-size:13px">${c.owner||'—'}</span></td>
-      <td>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          ${billBadge}
-          ${contractBadge}
-          ${paidInfo}
-        </div>
-      </td>
-      <td style="max-width:160px;font-size:12px;color:var(--text2)">${c.next||'—'}</td>
-      <td><span style="font-size:12px;color:${isOverdue?'var(--hot)':'var(--text2)'}">${deadline}</span></td>
-      <td>
-        <div class="action-btns">
-          <button class="btn-edit" onclick="editClient('${c.id}')" title="Sửa">✏️</button>
-          <button class="btn-del" onclick="deleteClient('${c.id}')" title="Xóa">🗑️</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
 
 function updateStats() {
   const total = clients.filter(c => !c.period || c.period === currentPeriod).length;
