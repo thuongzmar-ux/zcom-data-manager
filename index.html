@@ -28,6 +28,16 @@
     --zhub: #f59e0b;
     --mercy: #10b981;
   }
+  body.light-mode {
+    --bg: #f8fafc;
+    --bg2: #ffffff;
+    --bg3: #f1f5f9;
+    --card: rgba(0,0,0,0.02);
+    --border: rgba(0,0,0,0.12);
+    --text: #0f172a;
+    --text2: #475569;
+    --text3: #64748b;
+  }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     font-family: 'Inter', sans-serif;
@@ -58,10 +68,30 @@
   .logo-text { font-size:18px; font-weight:700; }
   .logo-sub { font-size:11px; color:var(--text3); margin-top:1px; }
   .header-right { display:flex; align-items:center; gap:16px; }
+  .theme-toggle {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text); font-size: 16px; transition: all 0.2s;
+  }
+  .theme-toggle:hover { background: var(--border); }
   .date-badge {
     background: var(--card); border:1px solid var(--border);
     border-radius:8px; padding:6px 12px; font-size:12px; color:var(--text2);
   }
+
+  /* Progress box */
+  .prog-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; display: flex; flex-direction: column; gap: 4px;
+    border-left: 4px solid var(--border); transition: all 0.2s;
+  }
+  .prog-card.due-today { border-left-color: var(--warm); }
+  .prog-card.overdue { border-left-color: var(--hot); }
+  .prog-card.stagnant { border-left-color: var(--lost); }
+  .prog-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text2); letter-spacing: 0.5px; }
+  .prog-val { font-size: 24px; font-weight: 800; color: var(--text); }
+  .prog-desc { font-size: 11px; color: var(--text3); }
+
 
   /* Stats bar */
   .stats-bar {
@@ -398,6 +428,7 @@
     </div>
   </div>
   <div class="header-right">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Bật/Tắt Giao diện Sáng/Tối">☀️</button>
     <div class="date-badge" id="currentDate"></div>
     <div class="period-switch">
       <button class="period-btn" id="pb-P1" onclick="setPeriod('P1')">P1: 01/4 – 20/4</button>
@@ -457,6 +488,9 @@
 <!-- ===== PIPELINE TAB ===== -->
 <div class="tab-content active" id="tab-pipeline">
   <div class="content">
+    <!-- TIẾN ĐỘ & NHẮC VIỆC -->
+    <div id="progressBox" style="margin-bottom:20px; display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;"></div>
+
     <div class="toolbar">
       <input class="search-box" id="searchBox" placeholder="Tìm kiếm tên khách, ngành hàng..." oninput="renderTable()">
       <button class="filter-btn" id="f-ALL" onclick="setFilter('ALL')">Tất cả</button>
@@ -1068,6 +1102,28 @@ function getProductKey(client) {
   return client.product || getProductGroup(client.package) || '';
 }
 
+// Theme Toggle
+let isLightMode = localStorage.getItem('zcom_theme') === 'light';
+if (isLightMode) document.body.classList.add('light-mode');
+window.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('themeToggle')) {
+    document.getElementById('themeToggle').textContent = isLightMode ? '🌙' : '☀️';
+  }
+});
+
+function toggleTheme() {
+  isLightMode = !isLightMode;
+  if(isLightMode) {
+    document.body.classList.add('light-mode');
+    localStorage.setItem('zcom_theme', 'light');
+    document.getElementById('themeToggle').textContent = '🌙';
+  } else {
+    document.body.classList.remove('light-mode');
+    localStorage.setItem('zcom_theme', 'dark');
+    document.getElementById('themeToggle').textContent = '☀️';
+  }
+}
+
 function renderTable() {
   const q = document.getElementById('searchBox').value.toLowerCase();
   let filtered = clients.filter(c => {
@@ -1076,6 +1132,49 @@ function renderTable() {
     const matchP = !c.period || c.period === currentPeriod;
     return matchQ && matchF && matchP;
   });
+
+  // Progress Calculators
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+  const now = new Date();
+  
+  let dueToday = 0;
+  let overdue = 0;
+  let stagnant = 0;
+  
+  clients.forEach(c => {
+    if(c.stage === 'WON' || c.stage === 'LOST' || c.stage === 'COLD') return;
+    if(c.deadline) {
+      const d = new Date(c.deadline);
+      d.setHours(0,0,0,0);
+      if(d.getTime() === todayDate.getTime()) dueToday++;
+      else if(d.getTime() < todayDate.getTime()) overdue++;
+    }
+    if(c.updatedAt) {
+      const diffDays = Math.floor((now - new Date(c.updatedAt)) / (1000 * 60 * 60 * 24));
+      if(diffDays > 7) stagnant++;
+    }
+  });
+
+  const progBox = document.getElementById('progressBox');
+  if(progBox) {
+    progBox.innerHTML = `
+      <div class="prog-card due-today">
+        <div class="prog-title">Deadline Hôm Nay</div>
+        <div class="prog-val">${dueToday}</div>
+        <div class="prog-desc">tác vụ cần xử lý gấp</div>
+      </div>
+      <div class="prog-card overdue">
+        <div class="prog-title">Quá Hạn Deadline</div>
+        <div class="prog-val" style="color:var(--hot)">${overdue}</div>
+        <div class="prog-desc">deals cần cập nhật lại ngay</div>
+      </div>
+      <div class="prog-card stagnant">
+        <div class="prog-title">Ngủ Đông (> 7 Ngày)</div>
+        <div class="prog-val">${stagnant}</div>
+        <div class="prog-desc">deals không có tương tác mới</div>
+      </div>
+    `;
+  }
 
   const tbody = document.getElementById('tableBody');
   if(!filtered.length) {
