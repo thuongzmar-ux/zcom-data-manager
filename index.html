@@ -598,6 +598,7 @@
             <option value="ZME Growth|15000000">ZME Growth — 15,000,000₫</option>
             <option value="ZME Scale|30000000">ZME Scale — 30,000,000₫</option>
           </select>
+          <input id="f-custom-name" placeholder="Tên biến thể tùy chỉnh..." style="margin-top:8px;display:none">
         </div>
       </div>
       <div class="form-row three">
@@ -751,14 +752,31 @@ function updatePackages() {
   const prod = document.getElementById('f-product').value;
   const pkg = document.getElementById('f-package');
   pkg.innerHTML = PACKAGES[prod].map(p => `<option value="${p.value}">${p.label}</option>`).join('');
+  pkg.innerHTML += `<option value="CUSTOM">+ Tùy chỉnh (nhập giá)...</option>`;
+  document.getElementById('f-custom-name').style.display = 'none';
   updatePrice();
 }
 
 function updatePrice() {
   const pkg = document.getElementById('f-package').value;
-  if(pkg) {
-    const price = parseInt(pkg.split('|')[1]);
-    document.getElementById('f-price').value = price;
+  const customInput = document.getElementById('f-custom-name');
+  const priceInput = document.getElementById('f-price');
+  if(pkg === 'CUSTOM') {
+    customInput.style.display = 'block';
+    customInput.focus();
+    priceInput.value = '';
+    priceInput.readOnly = false;
+    priceInput.style.cursor = 'text';
+    priceInput.style.borderColor = 'var(--accent)';
+    calcContribution();
+  } else {
+    customInput.style.display = 'none';
+    if(pkg) {
+      const price = parseInt(pkg.split('|')[1]);
+      priceInput.value = price;
+      priceInput.readOnly = false;
+      priceInput.style.cursor = 'text';
+    }
     calcContribution();
   }
 }
@@ -947,7 +965,9 @@ function switchTab(tab, el) {
 function openModal(id) {
   editingId = id || null;
   document.getElementById('editId').value = id || '';
-  document.getElementById('modalTitle').textContent = id ? '✏️ Sửa thông tin khách hàng' : '➕ Thêm khách hàng mới';
+  document.getElementById('modalTitle').textContent = id ? 'Sửa thông tin khách hàng' : 'Thêm khách hàng mới';
+  document.getElementById('f-custom-name').style.display = 'none';
+  document.getElementById('f-custom-name').value = '';
 
   if(id) {
     const c = clients.find(x=>x.id===id);
@@ -986,6 +1006,8 @@ function openModal(id) {
     document.getElementById('f-deadline').value='';
     document.getElementById('f-pain').value='';
     document.getElementById('f-note').value='';
+    document.getElementById('f-custom-name').value='';
+    document.getElementById('f-custom-name').style.display='none';
   }
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -1000,9 +1022,18 @@ function saveClient() {
   const prod = document.getElementById('f-product').value;
   const pkg = document.getElementById('f-package').value;
   const priceInput = parseInt(document.getElementById('f-price').value)||0;
-  const pkgArr = pkg.split('|');
-  const finalPkg = priceInput && priceInput != parseInt(pkgArr[1]||'0')
-    ? pkgArr[0]+'|'+priceInput : pkg;
+  const customName = document.getElementById('f-custom-name').value.trim();
+
+  let finalPkg;
+  if(pkg === 'CUSTOM') {
+    if(!customName) { alert('Vui lòng nhập tên biến thể tùy chỉnh!'); return; }
+    if(!priceInput) { alert('Vui lòng nhập giá hợp đồng!'); return; }
+    finalPkg = customName + '|' + priceInput;
+  } else {
+    const pkgArr = pkg.split('|');
+    finalPkg = priceInput && priceInput != parseInt(pkgArr[1]||'0')
+      ? pkgArr[0]+'|'+priceInput : pkg;
+  }
 
   const data = {
     id: editingId || Date.now().toString(),
