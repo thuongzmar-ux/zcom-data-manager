@@ -483,6 +483,9 @@
   <div class="tab" onclick="switchTab('luongb',this)">
     Lương B <span class="tab-count" id="tab-count-lb">0</span>
   </div>
+  <div class="tab" onclick="switchTab('sop',this)">
+    Quy trình (SOP)
+  </div>
 </div>
 
 <!-- ===== PIPELINE TAB ===== -->
@@ -649,6 +652,71 @@
       Originate = <strong style="color:#60a5fa">10%</strong> |
       Close = <strong style="color:#60a5fa">10%</strong> |
       Phong/Thế Anh close = <strong style="color:var(--hot)">0%</strong> về cá nhân — vào định phí
+    </div>
+  </div>
+</div>
+
+<!-- ===== SOP TAB ===== -->
+<div class="tab-content" id="tab-sop">
+  <div class="content" style="max-width:900px; margin:0 auto;">
+    <div style="margin-bottom:24px; border-bottom:1px solid var(--border); padding-bottom:16px;">
+      <h2 style="font-size:20px; color:var(--text); margin-bottom:8px;">📌 Quy Trình Sales Hàng Ngày (Sales Playbook)</h2>
+      <p style="font-size:13px; color:var(--text3);">Kỷ luật nhập liệu là nguồn sống rành mạch của cả team. Mọi cá nhân (sale, leader) tuân thủ 4 bước sau để hệ thống chạy trơn tru.</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr; gap:20px;">
+      <!-- BƯỚC 1 -->
+      <div style="background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--accent2);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:var(--accent); color:#fff; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700;">1</div>
+          <h3 style="font-size:15px; color:var(--text);">Đầu Cắm Pipeline (Lead Intake)</h3>
+        </div>
+        <ul style="font-size:13px; color:var(--text2); line-height:1.8; margin-left:4px; padding-left:20px;">
+          <li><strong style="color:var(--text);">Không để data ngoài sổ tay:</strong> Có số ĐT / Inbox là phải tạo profile ngay trên hệ thống.</li>
+          <li><strong style="color:var(--text);">Trường bắt buộc:</strong> Phải có "Ngành hàng", "Sàn đang bán" (Shopee/TikTok/Lazada) & "Vấn đề/Nỗi đau".</li>
+          <li><strong style="color:var(--text);">Phân định gốc rễ:</strong> Điền ngay bạn nào <strong style="color:var(--text);">Originate</strong> (người mang về) để chốt công sớm 10%.</li>
+        </ul>
+      </div>
+
+      <!-- BƯỚC 2 -->
+      <div style="background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--warm);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:rgba(245,158,11,0.15); color:var(--warm); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700;">2</div>
+          <h3 style="font-size:15px; color:var(--text);">Nuôi Cấy & Cập Nhật (Nurturing & Tracking)</h3>
+        </div>
+        <ul style="font-size:13px; color:var(--text2); line-height:1.8; margin-left:4px; padding-left:20px;">
+          <li><strong style="color:var(--text);">Nguyên tắc Next Action:</strong> Sau mỗi buổi gặp/Chat, đổi ngay nội dung <strong style="color:var(--text);">Next Action</strong> (Vd: "Gửi proposal thứ 3") và đặt lịch <strong style="color:var(--text);">Deadline</strong>. Đã sửa là không để rỗng.</li>
+          <li><strong style="color:var(--text);">Trượt Stage:</strong> Cập nhật nhiệt độ theo stage: <span class="badge PROPOSAL">PROPOSAL</span> (Đã báo giá) 👉 <span class="badge NEGOTIATION">NEGOTIATION</span> (Thương thảo).</li>
+          <li>Thường xuyên ngó Bảng Tiến độ trên tab Pipeline để xem có đang bị <strong style="color:var(--hot);">Quá Hạn</strong> hay ôm data đang <strong style="color:var(--lost);">Ngủ Đông (>7 Ngày)</strong> không.</li>
+        </ul>
+      </div>
+
+      <!-- BƯỚC 3 -->
+      <div style="background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--won);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:rgba(16,185,129,0.15); color:var(--won); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700;">3</div>
+          <h3 style="font-size:15px; color:var(--text);">Chốt Deal & Bàn Giao (Closing & Handoff)</h3>
+        </div>
+        <ul style="font-size:13px; color:var(--text2); line-height:1.8; margin-left:4px; padding-left:20px;">
+          <li>Khách chịu ký hợp đồng 👉 Kéo Stage sang <span class="badge WON">WON</span>.</li>
+          <li><strong style="color:var(--text);">Chốt Lương B:</strong> Update rõ người gõ búa <strong style="color:var(--text);">Closed</strong>. Hệ thống tự cộng vào quota team.</li>
+          <li><strong style="color:var(--text);">Admin - Pháp lý:</strong> Nhập trạng thái HĐ (Đã Ký / Đã Scan) và dán link <strong>Google Drive</strong> chứa file gốc để tiện tra cứu.</li>
+          <li>Kiểm soát <strong>Số tiền đã thu (PAID)</strong> và Mã Invoice. Chưa nhận tiền tuyệt đối không giao cho Vận Hành setup camp.</li>
+        </ul>
+      </div>
+
+      <!-- BƯỚC 4 -->
+      <div style="background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--lost);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div style="background:rgba(107,114,128,0.15); color:var(--lost); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700;">4</div>
+          <h3 style="font-size:15px; color:var(--text);">Lưu Kho / Tái Chế Data (Retention)</h3>
+        </div>
+        <ul style="font-size:13px; color:var(--text2); line-height:1.8; margin-left:4px; padding-left:20px;">
+          <li>Nhận lời từ chối 👉 Chuyển Stage về <span class="badge LOST">LOST</span> hoặc <span class="badge COLD">COLD</span>. <strong style="color:var(--hot);">Nghiêm cấm bấm Xóa Deal</strong>. Đơn giản là kéo khỏi Pipeline.</li>
+          <li>Bắt buộc phải ghi lại lý do "toang" vào ô <strong>Ghi chú</strong> (Vd: Chê giá cao, không chung vision, đối thủ giá rẻ hơn).</li>
+          <li>Kho data "Sạch" này sẽ dùng để làm list Retargeting (gừi Email Marketing, Chat Zalo gói up-sell) vào 3-6 tháng sau.</li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
