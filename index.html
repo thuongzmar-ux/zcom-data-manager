@@ -316,6 +316,21 @@
   .tab-content { display:none; }
   .tab-content.active { display:block; }
 
+  /* Period switch */
+  .period-switch {
+    display:flex; gap:4px; background:var(--bg3);
+    border:1px solid var(--border); border-radius:10px; padding:4px;
+  }
+  .period-btn {
+    background:transparent; border:none; border-radius:7px;
+    padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer;
+    color:var(--text3); font-family:inherit; transition:all 0.2s; white-space:nowrap;
+  }
+  .period-btn.active {
+    background:var(--accent); color:#fff;
+  }
+  .period-btn:not(.active):hover { color:var(--text); background:rgba(255,255,255,0.05); }
+
   /* Weekly scorecard */
   .week-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   .week-card {
@@ -368,7 +383,11 @@
   </div>
   <div class="header-right">
     <div class="date-badge" id="currentDate"></div>
-    <div class="date-badge" style="color:#a78bfa;border-color:rgba(124,58,237,0.3)">Target: 340,000,000₫</div>
+    <div class="period-switch">
+      <button class="period-btn" id="pb-P1" onclick="setPeriod('P1')">P1: 01/4 – 20/4</button>
+      <button class="period-btn active" id="pb-P2" onclick="setPeriod('P2')">P2: 20/4 – 20/5</button>
+    </div>
+    <div class="date-badge" id="period-target-badge" style="color:#a78bfa;border-color:rgba(124,58,237,0.3)">Target: 340,000,000₫</div>
   </div>
 </div>
 
@@ -664,6 +683,13 @@
       </div>
       <div class="form-row">
         <div>
+          <label>Giai đoạn</label>
+          <select id="f-period">
+            <option value="P2">P2: 20/4 – 20/5 (Full team)</option>
+            <option value="P1">P1: 01/4 – 20/4 (ZCOM cũ)</option>
+          </select>
+        </div>
+        <div>
           <label>Người phụ trách</label>
           <select id="f-owner">
             <option>Hường</option>
@@ -777,6 +803,54 @@ const NO_COMM = ['Phong (→vào định phí)', 'Thế Anh (→vào định ph�
 let clients = JSON.parse(localStorage.getItem('zcom_clients') || '[]');
 let currentFilter = 'ALL';
 let editingId = null;
+let currentPeriod = localStorage.getItem('zcom_period') || 'P2';
+
+// Period config
+const PERIODS = {
+  P1: {
+    label: 'P1: 01/4 – 20/4',
+    note: 'ZCOM cũ — tracking only',
+    target: null,
+    targetLabel: 'Tracking only',
+    weeks: [
+      { label:'Tuần A', dates:'01/04 – 07/04', start:'2026-04-01', end:'2026-04-07', target:null, zcom:null, mercy:null },
+      { label:'Tuần B', dates:'08/04 – 14/04', start:'2026-04-08', end:'2026-04-14', target:null, zcom:null, mercy:null },
+      { label:'Tuần C', dates:'15/04 – 20/04', start:'2026-04-15', end:'2026-04-20', target:null, zcom:null, mercy:null },
+    ],
+    team: ['Hường','Vũ','Vân Anh'],
+    weekKey: 'zcom_week_actuals_p1',
+    fixedCost: null,
+  },
+  P2: {
+    label: 'P2: 20/4 – 20/5',
+    note: 'Full team — Target: 340,000,000₫',
+    target: 340000000,
+    targetLabel: 'Target: 340,000,000₫',
+    weeks: [
+      { label:'Tuần 1', dates:'20/04 – 27/04', start:'2026-04-20', end:'2026-04-27', target:60000000, zcom:50000000, mercy:10000000 },
+      { label:'Tuần 2', dates:'28/04 – 04/05', start:'2026-04-28', end:'2026-05-04', target:90000000, zcom:75000000, mercy:15000000 },
+      { label:'Tuần 3', dates:'05/05 – 11/05', start:'2026-05-05', end:'2026-05-11', target:95000000, zcom:80000000, mercy:15000000 },
+      { label:'Tuần 4', dates:'12/05 – 20/05', start:'2026-05-12', end:'2026-05-20', target:95000000, zcom:75000000, mercy:20000000 },
+    ],
+    team: ['Hường','Vũ','Trang','Nguyên','Vân Anh','Hùng','Thiện'],
+    weekKey: 'zcom_week_actuals_p2',
+    fixedCost: 153300000,
+  }
+};
+
+function setPeriod(p) {
+  currentPeriod = p;
+  localStorage.setItem('zcom_period', p);
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pb-'+p).classList.add('active');
+  const cfg = PERIODS[p];
+  document.getElementById('period-target-badge').textContent = cfg.targetLabel;
+  document.getElementById('f-period').value = p;
+  weekActuals = JSON.parse(localStorage.getItem(cfg.weekKey) || JSON.stringify(new Array(cfg.weeks.length).fill(0)));
+  renderTable();
+  renderWeekGrid();
+  updateStats();
+}
 
 // Set date
 document.getElementById('currentDate').textContent = new Date().toLocaleDateString('vi-VN', {weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
@@ -786,56 +860,50 @@ function save() {
 }
 
 // ===== WEEKLY SCORECARD =====
-const WEEKS = [
-  { label:'Tuần 1', dates:'20/04 – 27/04', start:'2026-04-20', end:'2026-04-27',
-    target:60000000, zcom:50000000, mercy:10000000 },
-  { label:'Tuần 2', dates:'28/04 – 04/05', start:'2026-04-28', end:'2026-05-04',
-    target:90000000, zcom:75000000, mercy:15000000 },
-  { label:'Tuần 3', dates:'05/05 – 11/05', start:'2026-05-05', end:'2026-05-11',
-    target:95000000, zcom:80000000, mercy:15000000 },
-  { label:'Tuần 4', dates:'12/05 – 20/05', start:'2026-05-12', end:'2026-05-20',
-    target:95000000, zcom:75000000, mercy:20000000 },
-];
-let weekActuals = JSON.parse(localStorage.getItem('zcom_week_actuals') || '[0,0,0,0]');
+let weekActuals = JSON.parse(localStorage.getItem(PERIODS[currentPeriod].weekKey) || '[0,0,0,0]');
 
 function saveWeekActuals() {
-  localStorage.setItem('zcom_week_actuals', JSON.stringify(weekActuals));
+  localStorage.setItem(PERIODS[currentPeriod].weekKey, JSON.stringify(weekActuals));
 }
 
 function renderWeekGrid() {
   const today = new Date();
   const grid = document.getElementById('weekGrid');
   if(!grid) return;
+  const cfg = PERIODS[currentPeriod];
+  const weeks = cfg.weeks;
 
   let cumTarget = 0;
-  grid.innerHTML = WEEKS.map((w, i) => {
-    cumTarget += w.target;
+  grid.innerHTML = weeks.map((w, i) => {
+    if(w.target) cumTarget += w.target;
     const actual = weekActuals[i] || 0;
-    const pct = Math.min(100, Math.round(actual / w.target * 100));
+    const pct = w.target ? Math.min(100, Math.round(actual / w.target * 100)) : 0;
     const contribution = Math.round(actual * 0.45);
-    const gap = w.target - actual;
+    const gap = w.target ? w.target - actual : null;
     const wStart = new Date(w.start), wEnd = new Date(w.end + 'T23:59:59');
     const isCurrent = today >= wStart && today <= wEnd;
     const isDone = today > wEnd;
     const badgeClass = isDone ? 'done' : isCurrent ? 'now' : 'upcoming';
     const badgeText = isDone ? 'Xong' : isCurrent ? 'Tuần này' : 'Sắp tới';
     const cardClass = isDone ? 'done' : isCurrent ? 'current' : '';
-    const gapColor = gap <= 0 ? 'var(--won)' : gap < w.target * 0.5 ? 'var(--warm)' : 'var(--hot)';
-    const barColor = isDone && gap <= 0 ? 'linear-gradient(90deg,var(--won),#34d399)'
+    const gapColor = !gap || gap <= 0 ? 'var(--won)' : gap < (w.target||1) * 0.5 ? 'var(--warm)' : 'var(--hot)';
+    const barColor = isDone && gap !== null && gap <= 0 ? 'linear-gradient(90deg,var(--won),#34d399)'
       : 'linear-gradient(90deg,var(--accent),var(--accent2))';
+    const targetLine = w.target
+      ? `<div class="week-target" style="margin-bottom:4px">Target: <span>${fmt(w.target)}</span>
+           <span style="color:var(--text3);font-size:10px;margin-left:4px">→ tích lũy ${fmt(cumTarget)}</span></div>
+         <div style="font-size:10px;color:var(--text3);margin-bottom:10px">
+           ZCOM: <span style="color:var(--accent2)">${fmt(w.zcom)}</span>
+           &nbsp;·&nbsp; Mercy: <span style="color:var(--mercy)">${fmt(w.mercy)}</span>
+         </div>`
+      : `<div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-style:italic">Tracking only — không có formal target</div>`;
 
     return `
     <div class="week-card ${cardClass}">
       <span class="week-badge ${badgeClass}">${badgeText}</span>
       <div class="week-card-label">${w.label}</div>
       <div class="week-card-dates">${w.dates}</div>
-      <div class="week-target" style="margin-bottom:4px">Target: <span>${fmt(w.target)}</span>
-        <span style="color:var(--text3);font-size:10px;margin-left:4px">→ tích lũy ${fmt(cumTarget)}</span>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:10px">
-        ZCOM: <span style="color:var(--accent2)">${fmt(w.zcom)}</span>
-        &nbsp;·&nbsp; Mercy: <span style="color:var(--mercy)">${fmt(w.mercy)}</span>
-      </div>
+      ${targetLine}
       <input class="week-inp" type="number" placeholder="Revenue thực tế..."
         value="${actual || ''}"
         oninput="weekActuals[${i}]=parseInt(this.value)||0;saveWeekActuals();renderWeekGrid();updateStats()"
@@ -850,12 +918,12 @@ function renderWeekGrid() {
           </div>
         </div>
         <div class="week-stat">
-          <div class="week-stat-val" style="color:${gapColor}">${gap > 0 ? '-'+fmt(gap) : '✓ Done'}</div>
+          <div class="week-stat-val" style="color:${gapColor}">${gap !== null ? (gap > 0 ? '-'+fmt(gap) : '✓') : '—'}</div>
           <div class="week-stat-label">Gap</div>
         </div>
         <div class="week-stat" style="text-align:right">
-          <div class="week-stat-val">${pct}%</div>
-          <div class="week-stat-label">% đạt</div>
+          <div class="week-stat-val">${w.target ? pct+'%' : fmt(actual)}</div>
+          <div class="week-stat-label">${w.target ? '% đạt' : 'thực tế'}</div>
         </div>
       </div>
     </div>`;
@@ -930,7 +998,8 @@ function renderTable() {
   let filtered = clients.filter(c => {
     const matchQ = !q || c.name.toLowerCase().includes(q) || (c.industry||'').toLowerCase().includes(q) || (c.owner||'').toLowerCase().includes(q);
     const matchF = currentFilter === 'ALL' || c.stage === currentFilter;
-    return matchQ && matchF;
+    const matchP = !c.period || c.period === currentPeriod;
+    return matchQ && matchF && matchP;
   });
 
   const tbody = document.getElementById('tableBody');
@@ -973,24 +1042,30 @@ function renderTable() {
 }
 
 function updateStats() {
-  const total = clients.length;
-  const hot = clients.filter(c=>c.stage==='HOT').length;
-  const warm = clients.filter(c=>c.stage==='WARM').length;
-  const won = clients.filter(c=>c.stage==='WON').length;
-  const wonClients = clients.filter(c=>c.stage==='WON');
+  const total = clients.filter(c => !c.period || c.period === currentPeriod).length;
+  const hot = clients.filter(c=>c.stage==='HOT' && (!c.period || c.period===currentPeriod)).length;
+  const warm = clients.filter(c=>c.stage==='WARM' && (!c.period || c.period===currentPeriod)).length;
+  const won = clients.filter(c=>c.stage==='WON' && (!c.period || c.period===currentPeriod)).length;
+  const wonClients = clients.filter(c=>c.stage==='WON' && (!c.period || c.period===currentPeriod));
   const revenue = wonClients.reduce((s,c)=>{
     const price = parseInt((c.package||'').split('|')[1]||'0')||c.price||0;
     return s+price;
   },0);
-  const gap = 340000000 - revenue;
+  const periodTarget = PERIODS[currentPeriod].target;
+  const gap = periodTarget ? periodTarget - revenue : 0;
 
   document.getElementById('s-total').textContent = total;
   document.getElementById('s-hot').textContent = hot;
   document.getElementById('s-warm').textContent = warm;
   document.getElementById('s-won').textContent = won;
   document.getElementById('s-revenue').textContent = revenue>=1000000 ? (revenue/1000000).toFixed(1)+'tr' : fmtFull(revenue);
-  document.getElementById('s-gap').textContent = gap>0 ? '-'+fmt(gap) : '✅ Hòa vốn!';
-  document.getElementById('s-gap').style.color = gap<=0 ? 'var(--won)' : 'var(--accent2)';
+  if(periodTarget) {
+    document.getElementById('s-gap').textContent = gap>0 ? '-'+fmt(gap) : 'Hoa von!';
+    document.getElementById('s-gap').style.color = gap<=0 ? 'var(--won)' : 'var(--accent2)';
+  } else {
+    document.getElementById('s-gap').textContent = 'Tracking';
+    document.getElementById('s-gap').style.color = 'var(--text3)';
+  }
   document.getElementById('tab-count-pipeline').textContent = total;
 
   // Revenue tracker
@@ -1114,6 +1189,7 @@ function openModal(id) {
     document.getElementById('f-deadline').value = c.deadline||'';
     document.getElementById('f-pain').value = c.pain||'';
     document.getElementById('f-note').value = c.note||'';
+    document.getElementById('f-period').value = c.period||'P2';
   } else {
     document.getElementById('f-name').value='';
     document.getElementById('f-industry').value='';
@@ -1132,6 +1208,7 @@ function openModal(id) {
     document.getElementById('f-note').value='';
     document.getElementById('f-custom-name').value='';
     document.getElementById('f-custom-name').style.display='none';
+    document.getElementById('f-period').value = currentPeriod;
   }
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -1162,6 +1239,7 @@ function saveClient() {
   const data = {
     id: editingId || Date.now().toString(),
     name, product: prod, package: finalPkg, price: priceInput,
+    period: document.getElementById('f-period').value || currentPeriod,
     industry: document.getElementById('f-industry').value,
     platform: document.getElementById('f-platform').value,
     gmv: document.getElementById('f-gmv').value,
@@ -1200,8 +1278,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 
 // Init
 setFilter('ALL');
-renderWeekGrid();
-updateStats();
+setPeriod(currentPeriod);
 </script>
 </body>
 </html>
