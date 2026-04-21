@@ -342,12 +342,12 @@
     <div class="stat-sub">đang quản lý</div>
   </div>
   <div class="stat-item">
-    <div class="stat-label">🔴 HOT</div>
+    <div class="stat-label" style="color:var(--hot)">HOT</div>
     <div class="stat-value hot" id="s-hot">0</div>
     <div class="stat-sub">cần xử lý ngay</div>
   </div>
   <div class="stat-item">
-    <div class="stat-label">🟡 WARM</div>
+    <div class="stat-label" style="color:var(--warm)">WARM</div>
     <div class="stat-value warm" id="s-warm">0</div>
     <div class="stat-sub">đang follow</div>
   </div>
@@ -371,13 +371,13 @@
 <!-- TABS -->
 <div class="tabs">
   <div class="tab active" onclick="switchTab('pipeline',this)">
-    📋 Pipeline <span class="tab-count" id="tab-count-pipeline">0</span>
+    Pipeline <span class="tab-count" id="tab-count-pipeline">0</span>
   </div>
   <div class="tab" onclick="switchTab('revenue',this)">
-    📊 Doanh số
+    Doanh số
   </div>
   <div class="tab" onclick="switchTab('luongb',this)">
-    💰 Lương B <span class="tab-count" id="tab-count-lb">0</span>
+    Lương B <span class="tab-count" id="tab-count-lb">0</span>
   </div>
 </div>
 
@@ -385,12 +385,12 @@
 <div class="tab-content active" id="tab-pipeline">
   <div class="content">
     <div class="toolbar">
-      <input class="search-box" id="searchBox" placeholder="🔍  Tìm kiếm tên khách, ngành hàng..." oninput="renderTable()">
+      <input class="search-box" id="searchBox" placeholder="Tìm kiếm tên khách, ngành hàng..." oninput="renderTable()">
       <button class="filter-btn" id="f-ALL" onclick="setFilter('ALL')">Tất cả</button>
-      <button class="filter-btn HOT" id="f-HOT" onclick="setFilter('HOT')">🔴 HOT</button>
-      <button class="filter-btn WARM" id="f-WARM" onclick="setFilter('WARM')">🟡 WARM</button>
-      <button class="filter-btn COLD" id="f-COLD" onclick="setFilter('COLD')">⚫ COLD</button>
-      <button class="filter-btn" id="f-WON" onclick="setFilter('WON')">✅ Đã chốt</button>
+      <button class="filter-btn HOT" id="f-HOT" onclick="setFilter('HOT')">HOT</button>
+      <button class="filter-btn WARM" id="f-WARM" onclick="setFilter('WARM')">WARM</button>
+      <button class="filter-btn COLD" id="f-COLD" onclick="setFilter('COLD')">COLD</button>
+      <button class="filter-btn" id="f-WON" onclick="setFilter('WON')">Đã chốt</button>
       <button class="add-btn" onclick="openModal()">+ Thêm khách</button>
     </div>
     <div class="table-wrap">
@@ -529,10 +529,10 @@
     </div>
     <div style="margin-top:16px;padding:16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--text2);line-height:1.8">
       <strong style="color:var(--text)">Quy tắc hoa hồng:</strong><br>
-      🟢 Tự tìm + tự close = <strong style="color:var(--won)">20%</strong> full |
-      🔵 Originate = <strong style="color:#60a5fa">10%</strong> |
-      🔵 Close = <strong style="color:#60a5fa">10%</strong> |
-      🔴 Phong/Thế Anh close = <strong style="color:var(--hot)">0%</strong> về cá nhân → vào định phí
+      Tự tìm + tự close = <strong style="color:var(--won)">20%</strong> full |
+      Originate = <strong style="color:#60a5fa">10%</strong> |
+      Close = <strong style="color:#60a5fa">10%</strong> |
+      Phong/Thế Anh close = <strong style="color:var(--hot)">0%</strong> về cá nhân — vào định phí
     </div>
   </div>
 </div>
@@ -541,7 +541,7 @@
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="modalTitle">➕ Thêm khách hàng mới</div>
+      <div class="modal-title" id="modalTitle">Thêm khách hàng mới</div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -576,9 +576,9 @@
         <div>
           <label>Nhiệt độ</label>
           <select id="f-temp">
-            <option value="HOT">🔴 HOT</option>
-            <option value="WARM">🟡 WARM</option>
-            <option value="COLD">⚫ COLD</option>
+            <option value="HOT">HOT</option>
+            <option value="WARM">WARM</option>
+            <option value="COLD">COLD</option>
           </select>
         </div>
       </div>
@@ -630,13 +630,13 @@
         <div>
           <label>Stage</label>
           <select id="f-stage">
-            <option value="HOT">🔴 HOT — Đang tiếp cận</option>
-            <option value="WARM">🟡 WARM — Đang tư vấn</option>
-            <option value="PROPOSAL">📄 PROPOSAL — Đã gửi đề xuất</option>
-            <option value="NEGOTIATION">🤝 NEGOTIATION — Đang thương lượng</option>
-            <option value="WON">✅ WON — Đã ký hợp đồng</option>
-            <option value="COLD">⚫ COLD — Chưa quan tâm</option>
-            <option value="LOST">❌ LOST — Từ chối</option>
+            <option value="HOT">HOT — Đang tiếp cận</option>
+            <option value="WARM">WARM — Đang tư vấn</option>
+            <option value="PROPOSAL">PROPOSAL — Đã gửi đề xuất</option>
+            <option value="NEGOTIATION">NEGOTIATION — Đang thương lượng</option>
+            <option value="WON">WON — Đã ký hợp đồng</option>
+            <option value="COLD">COLD — Chưa quan tâm</option>
+            <option value="LOST">LOST — Từ chối</option>
           </select>
         </div>
       </div>
@@ -697,7 +697,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Hủy</button>
-      <button class="btn-save" onclick="saveClient()">💾 Lưu</button>
+      <button class="btn-save" onclick="saveClient()">Lưu</button>
     </div>
   </div>
 </div>
