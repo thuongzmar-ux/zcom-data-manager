@@ -315,6 +315,44 @@
   }
   .tab-content { display:none; }
   .tab-content.active { display:block; }
+
+  /* Weekly scorecard */
+  .week-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .week-card {
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:16px; position:relative; overflow:hidden; transition:border-color 0.2s;
+  }
+  .week-card.current { border-color:rgba(124,58,237,0.5); }
+  .week-card.done { border-color:rgba(16,185,129,0.3); }
+  .week-card-label {
+    font-size:10px; font-weight:700; letter-spacing:0.5px;
+    text-transform:uppercase; color:var(--text3); margin-bottom:4px;
+  }
+  .week-card-dates { font-size:11px; color:var(--text2); margin-bottom:12px; }
+  .week-target { font-size:11px; color:var(--text3); margin-bottom:6px; }
+  .week-target span { font-weight:700; color:var(--accent2); }
+  .week-inp {
+    width:100%; background:var(--bg2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 10px; color:var(--text); font-size:13px;
+    font-family:inherit; font-weight:600; margin-bottom:10px;
+    transition:border-color 0.2s;
+  }
+  .week-inp:focus { outline:none; border-color:var(--accent); }
+  .week-inp::placeholder { color:var(--text3); font-weight:400; }
+  .week-progress { height:4px; background:rgba(255,255,255,0.08); border-radius:2px; margin-bottom:10px; overflow:hidden; }
+  .week-bar { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width 0.4s; }
+  .week-stats { display:flex; gap:8px; }
+  .week-stat { flex:1; }
+  .week-stat-val { font-size:12px; font-weight:700; }
+  .week-stat-label { font-size:10px; color:var(--text3); }
+  .week-badge {
+    position:absolute; top:12px; right:12px;
+    font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;
+  }
+  .week-badge.now { background:rgba(124,58,237,0.2); color:var(--accent2); border:1px solid rgba(124,58,237,0.3); }
+  .week-badge.done { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
+  .week-badge.upcoming { background:rgba(255,255,255,0.05); color:var(--text3); border:1px solid var(--border); }
+  @media(max-width:768px) { .week-grid { grid-template-columns:repeat(2,1fr); } }
 </style>
 </head>
 <body>
@@ -439,6 +477,15 @@
         <div class="cpr-label">Lương B pool (20%)</div>
         <div class="cpr-val yellow" id="rev-luongb">0₫</div>
       </div>
+    </div>
+
+    <!-- Weekly Scorecard -->
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700">Scorecard theo tuần</div>
+        <div style="font-size:11px;color:var(--text3)">20/04 → 20/05/2026 &nbsp;·&nbsp; Target: 340,000,000₫</div>
+      </div>
+      <div class="week-grid" id="weekGrid"></div>
     </div>
 
     <!-- Product cards -->
@@ -736,6 +783,83 @@ document.getElementById('currentDate').textContent = new Date().toLocaleDateStri
 
 function save() {
   localStorage.setItem('zcom_clients', JSON.stringify(clients));
+}
+
+// ===== WEEKLY SCORECARD =====
+const WEEKS = [
+  { label:'Tuần 1', dates:'20/04 – 27/04', start:'2026-04-20', end:'2026-04-27',
+    target:60000000, zcom:50000000, mercy:10000000 },
+  { label:'Tuần 2', dates:'28/04 – 04/05', start:'2026-04-28', end:'2026-05-04',
+    target:90000000, zcom:75000000, mercy:15000000 },
+  { label:'Tuần 3', dates:'05/05 – 11/05', start:'2026-05-05', end:'2026-05-11',
+    target:95000000, zcom:80000000, mercy:15000000 },
+  { label:'Tuần 4', dates:'12/05 – 20/05', start:'2026-05-12', end:'2026-05-20',
+    target:95000000, zcom:75000000, mercy:20000000 },
+];
+let weekActuals = JSON.parse(localStorage.getItem('zcom_week_actuals') || '[0,0,0,0]');
+
+function saveWeekActuals() {
+  localStorage.setItem('zcom_week_actuals', JSON.stringify(weekActuals));
+}
+
+function renderWeekGrid() {
+  const today = new Date();
+  const grid = document.getElementById('weekGrid');
+  if(!grid) return;
+
+  let cumTarget = 0;
+  grid.innerHTML = WEEKS.map((w, i) => {
+    cumTarget += w.target;
+    const actual = weekActuals[i] || 0;
+    const pct = Math.min(100, Math.round(actual / w.target * 100));
+    const contribution = Math.round(actual * 0.45);
+    const gap = w.target - actual;
+    const wStart = new Date(w.start), wEnd = new Date(w.end + 'T23:59:59');
+    const isCurrent = today >= wStart && today <= wEnd;
+    const isDone = today > wEnd;
+    const badgeClass = isDone ? 'done' : isCurrent ? 'now' : 'upcoming';
+    const badgeText = isDone ? 'Xong' : isCurrent ? 'Tuần này' : 'Sắp tới';
+    const cardClass = isDone ? 'done' : isCurrent ? 'current' : '';
+    const gapColor = gap <= 0 ? 'var(--won)' : gap < w.target * 0.5 ? 'var(--warm)' : 'var(--hot)';
+    const barColor = isDone && gap <= 0 ? 'linear-gradient(90deg,var(--won),#34d399)'
+      : 'linear-gradient(90deg,var(--accent),var(--accent2))';
+
+    return `
+    <div class="week-card ${cardClass}">
+      <span class="week-badge ${badgeClass}">${badgeText}</span>
+      <div class="week-card-label">${w.label}</div>
+      <div class="week-card-dates">${w.dates}</div>
+      <div class="week-target" style="margin-bottom:4px">Target: <span>${fmt(w.target)}</span>
+        <span style="color:var(--text3);font-size:10px;margin-left:4px">→ tích lũy ${fmt(cumTarget)}</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:10px">
+        ZCOM: <span style="color:var(--accent2)">${fmt(w.zcom)}</span>
+        &nbsp;·&nbsp; Mercy: <span style="color:var(--mercy)">${fmt(w.mercy)}</span>
+      </div>
+      <input class="week-inp" type="number" placeholder="Revenue thực tế..."
+        value="${actual || ''}"
+        oninput="weekActuals[${i}]=parseInt(this.value)||0;saveWeekActuals();renderWeekGrid();updateStats()"
+        id="week-inp-${i}">
+      <div class="week-progress">
+        <div class="week-bar" style="width:${pct}%;background:${barColor}"></div>
+      </div>
+      <div class="week-stats">
+        <div class="week-stat">
+          <div class="week-stat-val" style="color:var(--won)">${fmt(contribution)}
+            <span style="font-size:9px;color:var(--text3)">contribution</span>
+          </div>
+        </div>
+        <div class="week-stat">
+          <div class="week-stat-val" style="color:${gapColor}">${gap > 0 ? '-'+fmt(gap) : '✓ Done'}</div>
+          <div class="week-stat-label">Gap</div>
+        </div>
+        <div class="week-stat" style="text-align:right">
+          <div class="week-stat-val">${pct}%</div>
+          <div class="week-stat-label">% đạt</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function fmt(n) {
@@ -1076,6 +1200,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 
 // Init
 setFilter('ALL');
+renderWeekGrid();
 updateStats();
 </script>
 </body>
