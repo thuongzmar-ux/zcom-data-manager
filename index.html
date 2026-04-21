@@ -666,21 +666,21 @@
       </div>
       <div class="form-row">
         <div>
-          <label>Nhóm sản phẩm *</label>
-          <select id="f-product" onchange="updatePackages()">
-            <option value="ZME">ZME — Ecom Management</option>
-            <option value="ZMKT">ZMKT — Media & Channel</option>
-            <option value="ZHUB">ZHUB — Livestream</option>
-            <option value="MERCY">Mercy Tech — AI</option>
+          <label>Gói dịch vụ *</label>
+          <select id="f-package" onchange="onPackageChange()">
+            <option value="ZME_TTS|15000000">ZME_TTS — TikTok Shop Management</option>
+            <option value="ZME_S|25000000">ZME_S — Shopee Scale</option>
+            <option value="ZHUB|20000000">ZHUB — Livestream Hub</option>
+            <option value="ZMKT|10000000">ZMKT — Media &amp; Channel</option>
+            <option value="MERCY|20000000">MERCY — AI Solutions</option>
+            <option value="CUSTOM">+ Tùy chỉnh (nhập giá)...</option>
           </select>
+          <input id="f-custom-name" placeholder="Tên gói tùy chỉnh..." style="margin-top:8px;display:none">
+          <input id="f-product" type="hidden" value="ZME">
         </div>
         <div>
-          <label>Gói cụ thể</label>
-          <select id="f-package" onchange="updatePrice()">
-            <option value="ZME Growth|15000000">ZME Growth — 15,000,000₫</option>
-            <option value="ZME Scale|30000000">ZME Scale — 30,000,000₫</option>
-          </select>
-          <input id="f-custom-name" placeholder="Tên biến thể tùy chỉnh..." style="margin-top:8px;display:none">
+          <label>Chi tiết gói</label>
+          <input id="f-package-detail" placeholder="VD: 3 tháng, Shop ABC, combo Shopee+TikTok...">
         </div>
       </div>
       <div class="form-row three">
@@ -1008,19 +1008,17 @@ function fmtFull(n) {
   return new Intl.NumberFormat('vi-VN').format(n) + '₫';
 }
 
-function updatePackages() {
-  const prod = document.getElementById('f-product').value;
-  const pkg = document.getElementById('f-package');
-  pkg.innerHTML = PACKAGES[prod].map(p => `<option value="${p.value}">${p.label}</option>`).join('');
-  pkg.innerHTML += `<option value="CUSTOM">+ Tùy chỉnh (nhập giá)...</option>`;
-  document.getElementById('f-custom-name').style.display = 'none';
-  updatePrice();
-}
+function updatePackages() { onPackageChange(); } // legacy compat
 
-function updatePrice() {
+function onPackageChange() {
   const pkg = document.getElementById('f-package').value;
   const customInput = document.getElementById('f-custom-name');
   const priceInput = document.getElementById('f-price');
+  // Auto-set hidden product group
+  const prodMap = {ZME_TTS:'ZME', ZME_S:'ZME', ZHUB:'ZHUB', ZMKT:'ZMKT', MERCY:'MERCY'};
+  const pkgKey = pkg.split('|')[0];
+  document.getElementById('f-product').value = prodMap[pkgKey] || 'ZME';
+
   if(pkg === 'CUSTOM') {
     customInput.style.display = 'block';
     customInput.focus();
@@ -1028,18 +1026,19 @@ function updatePrice() {
     priceInput.readOnly = false;
     priceInput.style.cursor = 'text';
     priceInput.style.borderColor = 'var(--accent)';
-    calcContribution();
   } else {
     customInput.style.display = 'none';
-    if(pkg) {
-      const price = parseInt(pkg.split('|')[1]);
-      priceInput.value = price;
-      priceInput.readOnly = false;
-      priceInput.style.cursor = 'text';
-    }
-    calcContribution();
+    customInput.value = '';
+    const price = parseInt(pkg.split('|')[1]) || 0;
+    priceInput.value = price;
+    priceInput.readOnly = false;
+    priceInput.style.cursor = 'text';
   }
+  calcContribution();
 }
+
+function updatePrice() { onPackageChange(); } // legacy compat
+
 
 function calcContribution() {
   const price = parseInt(document.getElementById('f-price').value) || 0;
@@ -1058,10 +1057,10 @@ function calcRemaining() {
 function getProductGroup(pkg) {
   if(!pkg) return '';
   const p = pkg.split('|')[0] || '';
-  if(p.startsWith('ZME')) return 'ZME';
-  if(p.startsWith('ZMKT')) return 'ZMKT';
-  if(p.startsWith('ZHUB')) return 'ZHUB';
-  if(p.startsWith('MT')) return 'MERCY';
+  if(p==='ZME_TTS' || p==='ZME_S' || p.startsWith('ZME')) return 'ZME';
+  if(p==='ZMKT' || p.startsWith('ZMKT')) return 'ZMKT';
+  if(p==='ZHUB' || p.startsWith('ZHUB')) return 'ZHUB';
+  if(p==='MERCY' || p.startsWith('MT')) return 'MERCY';
   return '';
 }
 
@@ -1112,7 +1111,9 @@ function renderTable() {
         <div class="td-sub">${c.industry||''} ${c.platform?'· '+c.platform:''}</div>
       </td>
       <td><div class="td-name">${c.platform||'—'}</div><div class="td-sub">${c.industry||''}</div></td>
-      <td><span class="badge ${prod.toLowerCase()}">${prod||'—'}</span></td>
+      <td><span class="badge ${prod.toLowerCase()}">${(c.package||'').split('|')[0]||'—'}</span>
+        ${c.packageDetail ? `<div class="td-sub">${c.packageDetail}</div>` : ''}
+      </td>
       <td>
         <div class="price-tag">${price ? fmtFull(price) : '—'}</div>
         <div class="contribution">${price ? '+'+fmt(price*0.45)+' contribution' : ''}</div>
@@ -1287,6 +1288,7 @@ function openModal(id) {
     document.getElementById('f-pain').value = c.pain||'';
     document.getElementById('f-note').value = c.note||'';
     document.getElementById('f-period').value = c.period||'P2';
+    document.getElementById('f-package-detail').value = c.packageDetail||'';
     document.getElementById('f-bill-status').value = c.billStatus||'';
     document.getElementById('f-invoice-no').value = c.invoiceNo||'';
     document.getElementById('f-payment-date').value = c.paymentDate||'';
@@ -1302,7 +1304,9 @@ function openModal(id) {
     document.getElementById('f-gmv').value='';
     document.getElementById('f-temp').value='HOT';
     document.getElementById('f-product').value='ZME';
-    updatePackages();
+    document.getElementById('f-package').value='ZME_TTS|15000000';
+    onPackageChange();
+    document.getElementById('f-package-detail').value='';
     document.getElementById('f-owner').value='Hường';
     document.getElementById('f-stage').value='HOT';
     document.getElementById('f-originate').value='';
@@ -1352,6 +1356,7 @@ function saveClient() {
   const data = {
     id: editingId || Date.now().toString(),
     name, product: prod, package: finalPkg, price: priceInput,
+    packageDetail: document.getElementById('f-package-detail').value.trim(),
     period: document.getElementById('f-period').value || currentPeriod,
     industry: document.getElementById('f-industry').value,
     platform: document.getElementById('f-platform').value,
