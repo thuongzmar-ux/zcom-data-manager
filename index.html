@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZCOM — Quản lý Data & Doanh số</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --bg2: #0f0f1e;
+    --bg3: #151528;
+    --card: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --accent-glow: rgba(124,58,237,0.3);
+    --hot: #ef4444;
+    --warm: #f59e0b;
+    --cold: #3b82f6;
+    --won: #10b981;
+    --lost: #6b7280;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --zme: #8b5cf6;
+    --zmkt: #06b6d4;
+    --zhub: #f59e0b;
+    --mercy: #10b981;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(168,85,247,0.1) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-icon {
+    width:36px; height:36px; border-radius:10px;
+    background: linear-gradient(135deg,#7c3aed,#a855f7);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:14px; color:#fff;
+  }
+  .logo-text { font-size:18px; font-weight:700; }
+  .logo-sub { font-size:11px; color:var(--text3); margin-top:1px; }
+  .header-right { display:flex; align-items:center; gap:16px; }
+  .date-badge {
+    background: var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:6px 12px; font-size:12px; color:var(--text2);
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(6,1fr);
+    gap:1px; background:var(--border);
+    border-bottom:1px solid var(--border);
+  }
+  .stat-item {
+    background:var(--bg2); padding:14px 20px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .stat-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; }
+  .stat-value { font-size:22px; font-weight:700; }
+  .stat-sub { font-size:11px; color:var(--text3); }
+  .stat-value.hot { color:var(--hot); }
+  .stat-value.warm { color:var(--warm); }
+  .stat-value.revenue { color:var(--won); }
+  .stat-value.gap { color:var(--accent2); }
+
+  /* Tabs */
+  .tabs {
+    display:flex; gap:0; border-bottom:1px solid var(--border);
+    background:var(--bg2);
+    padding: 0 24px;
+  }
+  .tab {
+    padding:14px 20px; font-size:13px; font-weight:500;
+    cursor:pointer; color:var(--text3); border-bottom:2px solid transparent;
+    transition:all 0.2s; display:flex; align-items:center; gap:8px;
+    position:relative; top:1px;
+  }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--accent2); border-bottom-color:var(--accent2); }
+  .tab-count {
+    background:rgba(124,58,237,0.2); color:var(--accent2);
+    border-radius:12px; padding:2px 8px; font-size:11px; font-weight:600;
+  }
+
+  /* Content */
+  .content { padding:24px; }
+
+  /* Toolbar */
+  .toolbar {
+    display:flex; gap:12px; margin-bottom:20px; align-items:center; flex-wrap:wrap;
+  }
+  .search-box {
+    flex:1; min-width:200px; background:var(--bg3); border:1px solid var(--border);
+    border-radius:10px; padding:10px 16px; color:var(--text); font-size:13px;
+    font-family:inherit; transition:border-color 0.2s;
+  }
+  .search-box:focus { outline:none; border-color:var(--accent); }
+  .search-box::placeholder { color:var(--text3); }
+  .filter-btn {
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:10px; padding:10px 16px; color:var(--text2);
+    font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s;
+    font-family:inherit;
+  }
+  .filter-btn:hover, .filter-btn.active { border-color:var(--accent); color:var(--accent2); }
+  .filter-btn.HOT.active { border-color:var(--hot); color:var(--hot); background:rgba(239,68,68,0.1); }
+  .filter-btn.WARM.active { border-color:var(--warm); color:var(--warm); background:rgba(245,158,11,0.1); }
+  .filter-btn.COLD.active { border-color:var(--cold); color:var(--cold); background:rgba(59,130,246,0.1); }
+  .add-btn {
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none; border-radius:10px; padding:10px 20px;
+    color:#fff; font-size:13px; font-weight:600; cursor:pointer;
+    font-family:inherit; transition:opacity 0.2s; white-space:nowrap;
+  }
+  .add-btn:hover { opacity:0.9; }
+
+  /* Table */
+  .table-wrap { overflow-x:auto; border-radius:12px; border:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead { background:var(--bg3); }
+  th {
+    padding:12px 14px; text-align:left; font-size:11px; font-weight:600;
+    color:var(--text3); text-transform:uppercase; letter-spacing:0.5px;
+    white-space:nowrap; border-bottom:1px solid var(--border);
+  }
+  td { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  .td-name { font-weight:600; font-size:13px; }
+  .td-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  /* Badges */
+  .badge {
+    display:inline-flex; align-items:center; gap:4px;
+    border-radius:6px; padding:3px 10px; font-size:11px; font-weight:600;
+    white-space:nowrap;
+  }
+  .badge.HOT, .badge.hot { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+  .badge.WARM, .badge.warm { background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); }
+  .badge.COLD, .badge.cold { background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); }
+  .badge.WON, .badge.won { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
+  .badge.LOST { background:rgba(107,114,128,0.15); color:#9ca3af; border:1px solid rgba(107,114,128,0.3); }
+  .badge.PROPOSAL { background:rgba(124,58,237,0.15); color:#a78bfa; border:1px solid rgba(124,58,237,0.3); }
+  .badge.NEGOTIATION { background:rgba(249,115,22,0.15); color:#fb923c; border:1px solid rgba(249,115,22,0.3); }
+  .badge.zme { background:rgba(139,92,246,0.15); color:#c4b5fd; border:1px solid rgba(139,92,246,0.3); }
+  .badge.zmkt { background:rgba(6,182,212,0.15); color:#67e8f9; border:1px solid rgba(6,182,212,0.3); }
+  .badge.zhub { background:rgba(245,158,11,0.15); color:#fcd34d; border:1px solid rgba(245,158,11,0.3); }
+  .badge.mercy { background:rgba(16,185,129,0.15); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+
+  /* Action btns */
+  .action-btns { display:flex; gap:8px; }
+  .btn-edit, .btn-del {
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
+    background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:14px; transition:all 0.2s;
+  }
+  .btn-edit:hover { border-color:var(--accent); background:rgba(124,58,237,0.15); }
+  .btn-del:hover { border-color:var(--hot); background:rgba(239,68,68,0.15); }
+
+  /* Modal */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+    z-index:1000; display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.show { display:flex; }
+  .modal {
+    background:var(--bg2); border:1px solid var(--border); border-radius:16px;
+    width:100%; max-width:680px; max-height:90vh; overflow-y:auto;
+  }
+  .modal-header {
+    padding:20px 24px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; position:sticky; top:0;
+    background:var(--bg2); z-index:1;
+  }
+  .modal-title { font-size:16px; font-weight:700; }
+  .modal-close {
+    width:32px; height:32px; border-radius:8px; border:1px solid var(--border);
+    background:transparent; cursor:pointer; color:var(--text2); font-size:18px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover { background:var(--card); }
+  .modal-body { padding:24px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .form-row.full { grid-template-columns:1fr; }
+  .form-row.three { grid-template-columns:1fr 1fr 1fr; }
+  label { font-size:12px; font-weight:600; color:var(--text2); display:block; margin-bottom:6px; letter-spacing:0.3px; }
+  input, select, textarea {
+    width:100%; background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; padding:10px 12px; color:var(--text); font-size:13px;
+    font-family:inherit; transition:border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent); }
+  textarea { resize:vertical; min-height:80px; }
+  select option { background:var(--bg2); }
+  .modal-footer {
+    padding:16px 24px; border-top:1px solid var(--border);
+    display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0;
+    background:var(--bg2);
+  }
+  .btn-cancel {
+    background:var(--bg3); border:1px solid var(--border); border-radius:8px;
+    padding:10px 20px; color:var(--text2); cursor:pointer; font-family:inherit; font-size:13px;
+  }
+  .btn-save {
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none; border-radius:8px; padding:10px 24px; color:#fff;
+    cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;
+  }
+
+  /* Revenue tracker */
+  .revenue-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+  .rev-card {
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:20px; position:relative; overflow:hidden;
+  }
+  .rev-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+  .rev-card.zme::before { background:linear-gradient(90deg,#7c3aed,#a855f7); }
+  .rev-card.zmkt::before { background:linear-gradient(90deg,#0891b2,#06b6d4); }
+  .rev-card.zhub::before { background:linear-gradient(90deg,#d97706,#f59e0b); }
+  .rev-card.mercy::before { background:linear-gradient(90deg,#059669,#10b981); }
+  .rev-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+  .rev-card-title { font-size:14px; font-weight:700; }
+  .rev-card-target { font-size:11px; color:var(--text3); }
+  .rev-progress { height:6px; background:rgba(255,255,255,0.08); border-radius:3px; margin-bottom:12px; overflow:hidden; }
+  .rev-bar { height:100%; border-radius:3px; transition:width 0.5s; }
+  .zme .rev-bar { background:linear-gradient(90deg,#7c3aed,#a855f7); }
+  .zmkt .rev-bar { background:linear-gradient(90deg,#0891b2,#06b6d4); }
+  .zhub .rev-bar { background:linear-gradient(90deg,#d97706,#f59e0b); }
+  .mercy .rev-bar { background:linear-gradient(90deg,#059669,#10b981); }
+  .rev-stats { display:flex; gap:20px; }
+  .rev-stat { flex:1; }
+  .rev-stat-val { font-size:18px; font-weight:700; }
+  .rev-stat-label { font-size:10px; color:var(--text3); margin-top:2px; }
+  .weekly-inputs { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }
+  .weekly-inp label { font-size:10px; }
+  .weekly-inp input { padding:8px 10px; font-size:12px; }
+
+  /* CPR box */
+  .cpr-box {
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:24px; margin-bottom:24px;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:1px;
+    background:var(--border);
+  }
+  .cpr-item {
+    background:var(--bg3); padding:20px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .cpr-label { font-size:11px; color:var(--text3); }
+  .cpr-val { font-size:24px; font-weight:800; }
+  .cpr-val.green { color:var(--won); }
+  .cpr-val.red { color:var(--hot); }
+  .cpr-val.yellow { color:var(--warm); }
+
+  /* Lương B tab */
+  .luongb-summary {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;
+  }
+  .lb-card {
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:16px; text-align:center;
+  }
+  .lb-name { font-size:12px; color:var(--text2); margin-bottom:8px; font-weight:600; }
+  .lb-amount { font-size:20px; font-weight:800; color:var(--accent2); }
+  .lb-deals { font-size:11px; color:var(--text3); margin-top:4px; }
+
+  /* Empty state */
+  .empty {
+    text-align:center; padding:60px 20px; color:var(--text3);
+  }
+  .empty-icon { font-size:48px; margin-bottom:16px; }
+  .empty-title { font-size:16px; font-weight:600; margin-bottom:8px; color:var(--text2); }
+
+  /* Tooltip price */
+  .price-tag { font-size:12px; font-weight:700; color:var(--won); }
+  .contribution { font-size:11px; color:var(--text3); }
+
+  /* Responsive */
+  @media(max-width:768px) {
+    .stats-bar { grid-template-columns:repeat(3,1fr); }
+    .form-row, .form-row.three { grid-template-columns:1fr; }
+    .revenue-grid { grid-template-columns:1fr; }
+    .luongb-summary { grid-template-columns:repeat(2,1fr); }
+    .cpr-box { grid-template-columns:repeat(3,1fr); }
+  }
+
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .dot.HOT { background:var(--hot); }
+  .dot.WARM { background:var(--warm); }
+  .dot.COLD { background:var(--cold); }
+  .highlight { animation:pulse 2s ease-in-out; }
+  @keyframes pulse {
+    0%,100% { background:transparent; }
+    50% { background:rgba(124,58,237,0.1); }
+  }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">ZC</div>
+    <div>
+      <div class="logo-text">ZCOM Data Manager</div>
+      <div class="logo-sub">Hường — Sales Leader Dashboard</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="date-badge" id="currentDate"></div>
+    <div class="date-badge" style="color:#a78bfa;border-color:rgba(124,58,237,0.3)">Target: 340,000,000₫</div>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-label">Tổng khách</div>
+    <div class="stat-value" id="s-total" style="color:var(--text)">0</div>
+    <div class="stat-sub">đang quản lý</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">🔴 HOT</div>
+    <div class="stat-value hot" id="s-hot">0</div>
+    <div class="stat-sub">cần xử lý ngay</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">🟡 WARM</div>
+    <div class="stat-value warm" id="s-warm">0</div>
+    <div class="stat-sub">đang follow</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Đã chốt</div>
+    <div class="stat-value revenue" id="s-won">0</div>
+    <div class="stat-sub">deals ký được</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Revenue</div>
+    <div class="stat-value revenue" id="s-revenue">0₫</div>
+    <div class="stat-sub">đã ký hợp đồng</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Gap</div>
+    <div class="stat-value gap" id="s-gap">-340tr</div>
+    <div class="stat-sub">còn cần bán thêm</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('pipeline',this)">
+    📋 Pipeline <span class="tab-count" id="tab-count-pipeline">0</span>
+  </div>
+  <div class="tab" onclick="switchTab('revenue',this)">
+    📊 Doanh số
+  </div>
+  <div class="tab" onclick="switchTab('luongb',this)">
+    💰 Lương B <span class="tab-count" id="tab-count-lb">0</span>
+  </div>
+</div>
+
+<!-- ===== PIPELINE TAB ===== -->
+<div class="tab-content active" id="tab-pipeline">
+  <div class="content">
+    <div class="toolbar">
+      <input class="search-box" id="searchBox" placeholder="🔍  Tìm kiếm tên khách, ngành hàng..." oninput="renderTable()">
+      <button class="filter-btn" id="f-ALL" onclick="setFilter('ALL')">Tất cả</button>
+      <button class="filter-btn HOT" id="f-HOT" onclick="setFilter('HOT')">🔴 HOT</button>
+      <button class="filter-btn WARM" id="f-WARM" onclick="setFilter('WARM')">🟡 WARM</button>
+      <button class="filter-btn COLD" id="f-COLD" onclick="setFilter('COLD')">⚫ COLD</button>
+      <button class="filter-btn" id="f-WON" onclick="setFilter('WON')">✅ Đã chốt</button>
+      <button class="add-btn" onclick="openModal()">+ Thêm khách</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Khách hàng</th>
+            <th>Ngành / Sàn</th>
+            <th>Nhóm SP</th>
+            <th>Gói & Giá</th>
+            <th>Stage</th>
+            <th>Phụ trách</th>
+            <th>Next action</th>
+            <th>Deadline</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REVENUE TAB ===== -->
+<div class="tab-content" id="tab-revenue">
+  <div class="content">
+    <!-- CPR Box -->
+    <div class="cpr-box" style="border-radius:12px;margin-bottom:24px;border:1px solid var(--border)">
+      <div class="cpr-item">
+        <div class="cpr-label">Revenue thực tế</div>
+        <div class="cpr-val" id="rev-total-display">0₫</div>
+      </div>
+      <div class="cpr-item">
+        <div class="cpr-label">Contribution (×45%)</div>
+        <div class="cpr-val green" id="rev-contribution">0₫</div>
+      </div>
+      <div class="cpr-item">
+        <div class="cpr-label">Định phí</div>
+        <div class="cpr-val" style="color:var(--text2)">153,300,000₫</div>
+      </div>
+      <div class="cpr-item">
+        <div class="cpr-label">GAP</div>
+        <div class="cpr-val red" id="rev-gap">-153,300,000₫</div>
+      </div>
+      <div class="cpr-item">
+        <div class="cpr-label">Lương B pool (20%)</div>
+        <div class="cpr-val yellow" id="rev-luongb">0₫</div>
+      </div>
+    </div>
+
+    <!-- Product cards -->
+    <div class="revenue-grid">
+      <div class="rev-card zme">
+        <div class="rev-card-header">
+          <div>
+            <div class="rev-card-title">ZME — Ecom Management</div>
+            <div class="rev-card-target">Target: 160,000,000₫</div>
+          </div>
+          <div class="badge zme">47%</div>
+        </div>
+        <div class="rev-progress"><div class="rev-bar" id="bar-zme" style="width:0%"></div></div>
+        <div class="rev-stats">
+          <div class="rev-stat"><div class="rev-stat-val" id="val-zme">0₫</div><div class="rev-stat-label">Doanh thu</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="pct-zme">0%</div><div class="rev-stat-label">% target</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="deals-zme">0</div><div class="rev-stat-label">Deals</div></div>
+        </div>
+      </div>
+      <div class="rev-card zmkt">
+        <div class="rev-card-header">
+          <div>
+            <div class="rev-card-title">ZMKT — Media & Channel</div>
+            <div class="rev-card-target">Target: 70,000,000₫</div>
+          </div>
+          <div class="badge zmkt">21%</div>
+        </div>
+        <div class="rev-progress"><div class="rev-bar" id="bar-zmkt" style="width:0%"></div></div>
+        <div class="rev-stats">
+          <div class="rev-stat"><div class="rev-stat-val" id="val-zmkt">0₫</div><div class="rev-stat-label">Doanh thu</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="pct-zmkt">0%</div><div class="rev-stat-label">% target</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="deals-zmkt">0</div><div class="rev-stat-label">Deals</div></div>
+        </div>
+      </div>
+      <div class="rev-card zhub">
+        <div class="rev-card-header">
+          <div>
+            <div class="rev-card-title">ZHUB — Livestream</div>
+            <div class="rev-card-target">Target: 50,000,000₫</div>
+          </div>
+          <div class="badge zhub">15%</div>
+        </div>
+        <div class="rev-progress"><div class="rev-bar" id="bar-zhub" style="width:0%"></div></div>
+        <div class="rev-stats">
+          <div class="rev-stat"><div class="rev-stat-val" id="val-zhub">0₫</div><div class="rev-stat-label">Doanh thu</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="pct-zhub">0%</div><div class="rev-stat-label">% target</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="deals-zhub">0</div><div class="rev-stat-label">Deals</div></div>
+        </div>
+      </div>
+      <div class="rev-card mercy">
+        <div class="rev-card-header">
+          <div>
+            <div class="rev-card-title">Mercy Tech — AI Solutions</div>
+            <div class="rev-card-target">Target: 60,000,000₫</div>
+          </div>
+          <div class="badge mercy">18%</div>
+        </div>
+        <div class="rev-progress"><div class="rev-bar" id="bar-mercy" style="width:0%"></div></div>
+        <div class="rev-stats">
+          <div class="rev-stat"><div class="rev-stat-val" id="val-mercy">0₫</div><div class="rev-stat-label">Doanh thu</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="pct-mercy">0%</div><div class="rev-stat-label">% target</div></div>
+          <div class="rev-stat"><div class="rev-stat-val" id="deals-mercy">0</div><div class="rev-stat-label">Deals</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LƯƠNG B TAB ===== -->
+<div class="tab-content" id="tab-luongb">
+  <div class="content">
+    <div class="luongb-summary" id="luongbCards"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Khách hàng</th>
+            <th>Gói</th>
+            <th>Giá hợp đồng</th>
+            <th>Originate (10%)</th>
+            <th>Close (10%)</th>
+            <th>Tổng HH (20%)</th>
+            <th>Trạng thái TT</th>
+          </tr>
+        </thead>
+        <tbody id="luongbBody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:16px;padding:16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--text)">Quy tắc hoa hồng:</strong><br>
+      🟢 Tự tìm + tự close = <strong style="color:var(--won)">20%</strong> full |
+      🔵 Originate = <strong style="color:#60a5fa">10%</strong> |
+      🔵 Close = <strong style="color:#60a5fa">10%</strong> |
+      🔴 Phong/Thế Anh close = <strong style="color:var(--hot)">0%</strong> về cá nhân → vào định phí
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(e=>e.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">➕ Thêm khách hàng mới</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div>
+          <label>Tên khách hàng *</label>
+          <input id="f-name" placeholder="VD: Shop Thời Trang ABC" required>
+        </div>
+        <div>
+          <label>Ngành hàng</label>
+          <input id="f-industry" placeholder="VD: Thời trang, Gia dụng, F&B...">
+        </div>
+      </div>
+      <div class="form-row three">
+        <div>
+          <label>Sàn đang bán</label>
+          <select id="f-platform">
+            <option value="">-- Chọn sàn --</option>
+            <option>Shopee</option>
+            <option>TikTok Shop</option>
+            <option>Shopee + TikTok</option>
+            <option>Lazada</option>
+            <option>Website</option>
+            <option>Chưa có sàn</option>
+          </select>
+        </div>
+        <div>
+          <label>GMV hiện tại (tr/tháng)</label>
+          <input id="f-gmv" type="number" placeholder="VD: 50">
+        </div>
+        <div>
+          <label>Nhiệt độ</label>
+          <select id="f-temp">
+            <option value="HOT">🔴 HOT</option>
+            <option value="WARM">🟡 WARM</option>
+            <option value="COLD">⚫ COLD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Nhóm sản phẩm *</label>
+          <select id="f-product" onchange="updatePackages()">
+            <option value="ZME">ZME — Ecom Management</option>
+            <option value="ZMKT">ZMKT — Media & Channel</option>
+            <option value="ZHUB">ZHUB — Livestream</option>
+            <option value="MERCY">Mercy Tech — AI</option>
+          </select>
+        </div>
+        <div>
+          <label>Gói cụ thể</label>
+          <select id="f-package" onchange="updatePrice()">
+            <option value="ZME Growth|15000000">ZME Growth — 15,000,000₫</option>
+            <option value="ZME Scale|30000000">ZME Scale — 30,000,000₫</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row three">
+        <div>
+          <label>Giá hợp đồng (₫)</label>
+          <input id="f-price" type="number" placeholder="15000000" oninput="calcContribution()">
+        </div>
+        <div>
+          <label>Contribution (45%)</label>
+          <input id="f-contribution" readonly style="color:var(--won);cursor:not-allowed">
+        </div>
+        <div>
+          <label>Hoa hồng (20%)</label>
+          <input id="f-commission" readonly style="color:var(--accent2);cursor:not-allowed">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Người phụ trách</label>
+          <select id="f-owner">
+            <option>Hường</option>
+            <option>Vũ</option>
+            <option>Trang</option>
+            <option>Nguyên</option>
+            <option>Vân Anh</option>
+            <option>Hùng</option>
+            <option>Thiện</option>
+          </select>
+        </div>
+        <div>
+          <label>Stage</label>
+          <select id="f-stage">
+            <option value="HOT">🔴 HOT — Đang tiếp cận</option>
+            <option value="WARM">🟡 WARM — Đang tư vấn</option>
+            <option value="PROPOSAL">📄 PROPOSAL — Đã gửi đề xuất</option>
+            <option value="NEGOTIATION">🤝 NEGOTIATION — Đang thương lượng</option>
+            <option value="WON">✅ WON — Đã ký hợp đồng</option>
+            <option value="COLD">⚫ COLD — Chưa quan tâm</option>
+            <option value="LOST">❌ LOST — Từ chối</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Originate bởi (người tìm)</label>
+          <select id="f-originate">
+            <option value="">-- Chọn --</option>
+            <option>Hường</option>
+            <option>Vũ</option>
+            <option>Trang</option>
+            <option>Nguyên</option>
+            <option>Vân Anh</option>
+            <option>Hùng</option>
+            <option>Thiện</option>
+            <option>Phong (→vào định phí)</option>
+            <option>Thế Anh (→vào định phí)</option>
+          </select>
+        </div>
+        <div>
+          <label>Closed bởi (người close)</label>
+          <select id="f-closer">
+            <option value="">-- Chọn --</option>
+            <option>Hường</option>
+            <option>Vũ</option>
+            <option>Trang</option>
+            <option>Nguyên</option>
+            <option>Vân Anh</option>
+            <option>Hùng</option>
+            <option>Thiện</option>
+            <option>Phong (→vào định phí)</option>
+            <option>Thế Anh (→vào định phí)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Next action</label>
+          <input id="f-next" placeholder="VD: Gửi proposal, Gọi lại, Gặp trực tiếp...">
+        </div>
+        <div>
+          <label>Deadline</label>
+          <input id="f-deadline" type="date">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div>
+          <label>Vấn đề / Nỗi đau chính</label>
+          <textarea id="f-pain" placeholder="VD: Shop không tăng được đơn, không có content, không biết chạy ads..."></textarea>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div>
+          <label>Ghi chú</label>
+          <textarea id="f-note" placeholder="Ghi thêm thông tin liên hệ, lịch sử nói chuyện..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Hủy</button>
+      <button class="btn-save" onclick="saveClient()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PACKAGES = {
+  ZME: [
+    {label:'ZME Growth — 15,000,000₫', value:'ZME Growth|15000000'},
+    {label:'ZME Scale — 30,000,000₫', value:'ZME Scale|30000000'},
+  ],
+  ZMKT: [
+    {label:'ZMKT Basic — 10,000,000₫', value:'ZMKT Basic|10000000'},
+    {label:'ZMKT Pro — 20,000,000₫', value:'ZMKT Pro|20000000'},
+  ],
+  ZHUB: [
+    {label:'ZHUB Standard — 15,000,000₫', value:'ZHUB Standard|15000000'},
+    {label:'ZHUB Full — 25,000,000₫', value:'ZHUB Full|25000000'},
+  ],
+  MERCY: [
+    {label:'MT Standard — 20,000,000₫', value:'MT Standard|20000000'},
+    {label:'MT Enterprise — 30,000,000₫', value:'MT Enterprise|30000000'},
+  ]
+};
+
+const TARGETS = { ZME:160000000, ZMKT:70000000, ZHUB:50000000, MERCY:60000000 };
+const TEAM = ['Hường','Vũ','Trang','Nguyên','Vân Anh','Hùng','Thiện'];
+const NO_COMM = ['Phong (→vào định phí)', 'Thế Anh (→vào định phí)'];
+
+let clients = JSON.parse(localStorage.getItem('zcom_clients') || '[]');
+let currentFilter = 'ALL';
+let editingId = null;
+
+// Set date
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('vi-VN', {weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+
+function save() {
+  localStorage.setItem('zcom_clients', JSON.stringify(clients));
+}
+
+function fmt(n) {
+  if(n >= 1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'') + 'tr';
+  if(n >= 1000) return (n/1000).toFixed(0) + 'K';
+  return n.toString();
+}
+
+function fmtFull(n) {
+  return new Intl.NumberFormat('vi-VN').format(n) + '₫';
+}
+
+function updatePackages() {
+  const prod = document.getElementById('f-product').value;
+  const pkg = document.getElementById('f-package');
+  pkg.innerHTML = PACKAGES[prod].map(p => `<option value="${p.value}">${p.label}</option>`).join('');
+  updatePrice();
+}
+
+function updatePrice() {
+  const pkg = document.getElementById('f-package').value;
+  if(pkg) {
+    const price = parseInt(pkg.split('|')[1]);
+    document.getElementById('f-price').value = price;
+    calcContribution();
+  }
+}
+
+function calcContribution() {
+  const price = parseInt(document.getElementById('f-price').value) || 0;
+  document.getElementById('f-contribution').value = fmtFull(Math.round(price * 0.45));
+  document.getElementById('f-commission').value = fmtFull(Math.round(price * 0.20));
+}
+
+function getProductGroup(pkg) {
+  if(!pkg) return '';
+  const p = pkg.split('|')[0] || '';
+  if(p.startsWith('ZME')) return 'ZME';
+  if(p.startsWith('ZMKT')) return 'ZMKT';
+  if(p.startsWith('ZHUB')) return 'ZHUB';
+  if(p.startsWith('MT')) return 'MERCY';
+  return '';
+}
+
+function getProductKey(client) {
+  return client.product || getProductGroup(client.package) || '';
+}
+
+function renderTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  let filtered = clients.filter(c => {
+    const matchQ = !q || c.name.toLowerCase().includes(q) || (c.industry||'').toLowerCase().includes(q) || (c.owner||'').toLowerCase().includes(q);
+    const matchF = currentFilter === 'ALL' || c.stage === currentFilter;
+    return matchQ && matchF;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  if(!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Chưa có khách hàng nào</div><div>Nhấn "+ Thêm khách" để bắt đầu</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const pkgName = (c.package||'').split('|')[0] || '—';
+    const price = parseInt((c.package||'').split('|')[1]||'0') || (c.price||0);
+    const prod = getProductKey(c);
+    const stageClass = c.stage === 'WON' ? 'WON' : c.stage === 'LOST' ? 'LOST' : c.stage === 'PROPOSAL' ? 'PROPOSAL' : c.stage === 'NEGOTIATION' ? 'NEGOTIATION' : c.stage;
+    const deadline = c.deadline ? new Date(c.deadline).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}) : '—';
+    const isOverdue = c.deadline && new Date(c.deadline) < new Date() && c.stage !== 'WON' && c.stage !== 'LOST';
+    return `
+    <tr>
+      <td>
+        <div class="td-name">${c.name}</div>
+        <div class="td-sub">${c.industry||''} ${c.platform?'· '+c.platform:''}</div>
+      </td>
+      <td><div class="td-name">${c.platform||'—'}</div><div class="td-sub">${c.industry||''}</div></td>
+      <td><span class="badge ${prod.toLowerCase()}">${prod||'—'}</span></td>
+      <td>
+        <div class="price-tag">${price ? fmtFull(price) : '—'}</div>
+        <div class="contribution">${price ? '+'+fmt(price*0.45)+' contribution' : ''}</div>
+      </td>
+      <td><span class="badge ${stageClass}">${c.stage||'—'}</span></td>
+      <td><span style="font-size:13px">${c.owner||'—'}</span></td>
+      <td style="max-width:180px;font-size:12px;color:var(--text2)">${c.next||'—'}</td>
+      <td><span style="font-size:12px;color:${isOverdue?'var(--hot)':'var(--text2)'}">${deadline}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-edit" onclick="editClient('${c.id}')" title="Sửa">✏️</button>
+          <button class="btn-del" onclick="deleteClient('${c.id}')" title="Xóa">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateStats() {
+  const total = clients.length;
+  const hot = clients.filter(c=>c.stage==='HOT').length;
+  const warm = clients.filter(c=>c.stage==='WARM').length;
+  const won = clients.filter(c=>c.stage==='WON').length;
+  const wonClients = clients.filter(c=>c.stage==='WON');
+  const revenue = wonClients.reduce((s,c)=>{
+    const price = parseInt((c.package||'').split('|')[1]||'0')||c.price||0;
+    return s+price;
+  },0);
+  const gap = 340000000 - revenue;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-hot').textContent = hot;
+  document.getElementById('s-warm').textContent = warm;
+  document.getElementById('s-won').textContent = won;
+  document.getElementById('s-revenue').textContent = revenue>=1000000 ? (revenue/1000000).toFixed(1)+'tr' : fmtFull(revenue);
+  document.getElementById('s-gap').textContent = gap>0 ? '-'+fmt(gap) : '✅ Hòa vốn!';
+  document.getElementById('s-gap').style.color = gap<=0 ? 'var(--won)' : 'var(--accent2)';
+  document.getElementById('tab-count-pipeline').textContent = total;
+
+  // Revenue tracker
+  updateRevenueTracker(revenue);
+  updateLuongB();
+}
+
+function updateRevenueTracker(totalRev) {
+  const wonClients = clients.filter(c=>c.stage==='WON');
+  const byProd = {ZME:0, ZMKT:0, ZHUB:0, MERCY:0};
+  const dealsByProd = {ZME:0, ZMKT:0, ZHUB:0, MERCY:0};
+  wonClients.forEach(c => {
+    const prod = getProductKey(c);
+    const price = parseInt((c.package||'').split('|')[1]||'0')||c.price||0;
+    if(byProd[prod]!==undefined) { byProd[prod]+=price; dealsByProd[prod]++; }
+  });
+
+  ['ZME','ZMKT','ZHUB','MERCY'].forEach(p => {
+    const target = TARGETS[p];
+    const pct = Math.min(100, Math.round(byProd[p]/target*100));
+    const key = p.toLowerCase();
+    document.getElementById('bar-'+key).style.width = pct+'%';
+    document.getElementById('val-'+key).textContent = fmtFull(byProd[p]);
+    document.getElementById('pct-'+key).textContent = pct+'%';
+    document.getElementById('deals-'+key).textContent = dealsByProd[p];
+  });
+
+  const contribution = Math.round(totalRev * 0.45);
+  const gap = 153300000 - contribution;
+  const luongb = Math.round(totalRev * 0.20);
+
+  document.getElementById('rev-total-display').textContent = fmtFull(totalRev);
+  document.getElementById('rev-contribution').textContent = fmtFull(contribution);
+  document.getElementById('rev-gap').textContent = gap>0 ? '-'+fmtFull(gap) : '✅ HÒA VỐN!';
+  document.getElementById('rev-gap').className = 'cpr-val ' + (gap<=0?'green':'red');
+  document.getElementById('rev-luongb').textContent = fmtFull(luongb);
+}
+
+function updateLuongB() {
+  const wonClients = clients.filter(c=>c.stage==='WON');
+  const lbByPerson = {};
+  TEAM.forEach(t => lbByPerson[t] = {amount:0, deals:0});
+
+  const rows = wonClients.map(c => {
+    const price = parseInt((c.package||'').split('|')[1]||'0')||c.price||0;
+    const pkgName = (c.package||'').split('|')[0]||'—';
+    const hh = Math.round(price*0.20);
+    const orig = c.originate || '';
+    const closer = c.closer || '';
+    const origIsLeader = NO_COMM.includes(orig);
+    const closerIsLeader = NO_COMM.includes(closer);
+    const origAmt = (!origIsLeader && orig && orig!==closer) ? Math.round(price*0.10) : ((!origIsLeader && orig && orig===closer) ? Math.round(price*0.20) : 0);
+    const closerAmt = (!closerIsLeader && closer && orig!==closer) ? Math.round(price*0.10) : 0;
+
+    if(orig && !origIsLeader && lbByPerson[orig]) { lbByPerson[orig].amount += origAmt; lbByPerson[orig].deals++; }
+    if(closer && closer!==orig && !closerIsLeader && lbByPerson[closer]) { lbByPerson[closer].amount += closerAmt; lbByPerson[closer].deals++; }
+
+    return `<tr>
+      <td><strong>${c.name}</strong><div style="font-size:11px;color:var(--text3)">${c.industry||''}</div></td>
+      <td><span class="badge ${pkgName.startsWith('ZME')?'zme':pkgName.startsWith('ZMKT')?'zmkt':pkgName.startsWith('ZHUB')?'zhub':'mercy'}">${pkgName}</span></td>
+      <td class="price-tag">${fmtFull(price)}</td>
+      <td style="color:#60a5fa">${orig ? (origIsLeader?'→ Định phí':fmtFull(origAmt)) : '—'}<div style="font-size:11px;color:var(--text3)">${orig||''}</div></td>
+      <td style="color:#60a5fa">${closer? (closerIsLeader?'→ Định phí': (closer===orig?'(same)':fmtFull(closerAmt))) : '—'}<div style="font-size:11px;color:var(--text3)">${closer||''}</div></td>
+      <td style="color:var(--accent2);font-weight:700">${fmtFull(hh)}</td>
+      <td><span class="badge won">Đã thanh toán</span></td>
+    </tr>`;
+  });
+
+  document.getElementById('luongbBody').innerHTML = rows.join('') || `<tr><td colspan="7"><div class="empty"><div class="empty-icon">💰</div><div class="empty-title">Chưa có deal nào được chốt</div></div></td></tr>`;
+
+  // Summary cards
+  const cards = TEAM.map(t => `
+    <div class="lb-card">
+      <div class="lb-name">${t}</div>
+      <div class="lb-amount">${lbByPerson[t]?.amount ? fmt(lbByPerson[t].amount) : '0'}₫</div>
+      <div class="lb-deals">${lbByPerson[t]?.deals||0} deal</div>
+    </div>`).join('');
+  document.getElementById('luongbCards').innerHTML = cards;
+  document.getElementById('tab-count-lb').textContent = wonClients.length;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('f-'+f).classList.add('active');
+  renderTable();
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('editId').value = id || '';
+  document.getElementById('modalTitle').textContent = id ? '✏️ Sửa thông tin khách hàng' : '➕ Thêm khách hàng mới';
+
+  if(id) {
+    const c = clients.find(x=>x.id===id);
+    if(!c) return;
+    document.getElementById('f-name').value = c.name||'';
+    document.getElementById('f-industry').value = c.industry||'';
+    document.getElementById('f-platform').value = c.platform||'';
+    document.getElementById('f-gmv').value = c.gmv||'';
+    document.getElementById('f-temp').value = c.temp||'HOT';
+    document.getElementById('f-product').value = c.product||'ZME';
+    updatePackages();
+    document.getElementById('f-package').value = c.package||'';
+    document.getElementById('f-price').value = c.price||'';
+    calcContribution();
+    document.getElementById('f-owner').value = c.owner||'Hường';
+    document.getElementById('f-stage').value = c.stage||'HOT';
+    document.getElementById('f-originate').value = c.originate||'';
+    document.getElementById('f-closer').value = c.closer||'';
+    document.getElementById('f-next').value = c.next||'';
+    document.getElementById('f-deadline').value = c.deadline||'';
+    document.getElementById('f-pain').value = c.pain||'';
+    document.getElementById('f-note').value = c.note||'';
+  } else {
+    document.getElementById('f-name').value='';
+    document.getElementById('f-industry').value='';
+    document.getElementById('f-platform').value='';
+    document.getElementById('f-gmv').value='';
+    document.getElementById('f-temp').value='HOT';
+    document.getElementById('f-product').value='ZME';
+    updatePackages();
+    document.getElementById('f-owner').value='Hường';
+    document.getElementById('f-stage').value='HOT';
+    document.getElementById('f-originate').value='';
+    document.getElementById('f-closer').value='';
+    document.getElementById('f-next').value='';
+    document.getElementById('f-deadline').value='';
+    document.getElementById('f-pain').value='';
+    document.getElementById('f-note').value='';
+  }
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function saveClient() {
+  const name = document.getElementById('f-name').value.trim();
+  if(!name) { alert('Vui lòng nhập tên khách hàng!'); return; }
+  const prod = document.getElementById('f-product').value;
+  const pkg = document.getElementById('f-package').value;
+  const priceInput = parseInt(document.getElementById('f-price').value)||0;
+  const pkgArr = pkg.split('|');
+  const finalPkg = priceInput && priceInput != parseInt(pkgArr[1]||'0')
+    ? pkgArr[0]+'|'+priceInput : pkg;
+
+  const data = {
+    id: editingId || Date.now().toString(),
+    name, product: prod, package: finalPkg, price: priceInput,
+    industry: document.getElementById('f-industry').value,
+    platform: document.getElementById('f-platform').value,
+    gmv: document.getElementById('f-gmv').value,
+    temp: document.getElementById('f-temp').value,
+    owner: document.getElementById('f-owner').value,
+    stage: document.getElementById('f-stage').value,
+    originate: document.getElementById('f-originate').value,
+    closer: document.getElementById('f-closer').value,
+    next: document.getElementById('f-next').value,
+    deadline: document.getElementById('f-deadline').value,
+    pain: document.getElementById('f-pain').value,
+    note: document.getElementById('f-note').value,
+    updatedAt: new Date().toISOString()
+  };
+
+  if(editingId) {
+    const idx = clients.findIndex(c=>c.id===editingId);
+    if(idx>=0) clients[idx]=data;
+  } else {
+    clients.unshift(data);
+  }
+  save(); closeModal(); renderTable(); updateStats();
+}
+
+function editClient(id) { openModal(id); }
+
+function deleteClient(id) {
+  if(!confirm('Xóa khách hàng này?')) return;
+  clients = clients.filter(c=>c.id!==id);
+  save(); renderTable(); updateStats();
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if(e.target===this) closeModal();
+});
+
+// Init
+setFilter('ALL');
+updateStats();
+</script>
+</body>
+</html>
