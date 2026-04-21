@@ -1114,7 +1114,16 @@ function save() {
 }
 
 // ===== WEEKLY SCORECARD =====
-let weekActuals = JSON.parse(localStorage.getItem(PERIODS[currentPeriod].weekKey) || '[0,0,0,0]');
+let weekActuals = JSON.parse(localStorage.getItem(PERIODS[currentPeriod].weekKey) || 'null');
+if(!weekActuals || (Array.isArray(weekActuals) && weekActuals.reduce((a,b)=>a+b,0)===0)) {
+  if (currentPeriod === 'P2') {
+    weekActuals = [65000000, 50000000, 0, 0];
+    localStorage.setItem('zcom_week_actuals_p2', JSON.stringify(weekActuals));
+    localStorage.setItem('zcom_week_actuals_p1', JSON.stringify([45000000, 50000000, 60000000]));
+  } else {
+    weekActuals = [45000000, 50000000, 60000000];
+  }
+}
 
 function saveWeekActuals() {
   localStorage.setItem(PERIODS[currentPeriod].weekKey, JSON.stringify(weekActuals));
