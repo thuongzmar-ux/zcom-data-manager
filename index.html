@@ -1042,7 +1042,19 @@ const TARGETS = { ZME:160000000, ZMKT:70000000, ZHUB:50000000, MERCY:60000000 };
 const TEAM = ['Hường','Vũ','Trang','Nguyên','Vân Anh','Hùng','Thiện'];
 const NO_COMM = ['Phong (→vào định phí)', 'Thế Anh (→vào định phí)'];
 
-let clients = JSON.parse(localStorage.getItem('zcom_clients') || '[]');
+let clients = JSON.parse(localStorage.getItem('zcom_clients') || 'null');
+if(!clients || clients.length === 0) {
+  const d = new Date();
+  const dStr = (offset) => new Date(d.getTime() + offset*86400000).toISOString().split('T')[0];
+  clients = [
+    { id: 'mock1', name: 'Shop Mẹ Bé Bi', industry: 'Mẹ & Bé', platform: 'Shopee', gmv: '300', temp: 'HOT', product: 'ZME', package: 'ZME_S|25000000', owner: 'Hường', stage: 'HOT', next: 'Gọi lại chốt phương án xây kênh', deadline: dStr(0), updatedAt: d.toISOString(), period: 'P2' },
+    { id: 'mock2', name: 'Thời trang Neva', industry: 'Thời trang', platform: 'TikTok Shop', gmv: '500', temp: 'WARM', product: 'ZHUB', package: 'ZHUB|20000000', owner: 'Trang', stage: 'PROPOSAL', next: 'Khách đang check proposal Team Livestream', deadline: dStr(1), updatedAt: d.toISOString(), period: 'P2' },
+    { id: 'mock3', name: 'Gia Dụng Plus (VIP)', industry: 'Gia dụng', platform: 'Shopee + TikTok', gmv: '800', temp: 'HOT', product: 'ZMKT', package: 'ZMKT|10000000', owner: 'Vũ', stage: 'NEGOTIATION', next: 'Xin sếp giảm giá 10% để chốt', deadline: dStr(-2), updatedAt: new Date(d.getTime() - 86400000*2).toISOString(), period: 'P2' },
+    { id: 'mock4', name: 'Mỹ Phẩm Queen', industry: 'Mỹ phẩm', platform: 'Lazada', gmv: '1200', temp: 'HOT', product: 'MERCY', package: 'MERCY|20000000', owner: 'Hường', stage: 'WON', originate: 'Hường', closer: 'Hường', amountPaid: 20000000, billStatus: 'PAID', contractStatus: 'SIGNED', updatedAt: d.toISOString(), period: 'P2' },
+    { id: 'mock5', name: 'Đồ Ăn Vặt Ghiền', industry: 'F&B', platform: 'Shopee', gmv: '150', temp: 'COLD', product: 'ZME', package: 'ZME_TTS|15000000', owner: 'Vũ', stage: 'LOST', note: 'Chê giá đắt, tự thuê sinh viên làm.', updatedAt: new Date(d.getTime() - 86400000*10).toISOString(), period: 'P2' }
+  ];
+  localStorage.setItem('zcom_clients', JSON.stringify(clients));
+}
 let currentFilter = 'ALL';
 let editingId = null;
 let currentPeriod = localStorage.getItem('zcom_period') || 'P2';
