@@ -17,6 +17,18 @@
   --blue:#60a5fa;--blue-dim:rgba(96,165,250,.12);
   --sidebar-w:220px;--radius:10px;--radius-sm:6px;
 }
+:root[data-theme="light"] {
+  --bg:#f4f5f7;--bg2:#ffffff;--bg3:#f0f1f3;--bg4:#e4e5e7;
+  --border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.15);
+  --text:#111827;--text2:#4b5563;--text3:#6b7280;
+  --purple:#6d28d9;--purple-dim:rgba(109,40,217,.1);--purple-bg:rgba(109,40,217,.05);
+  --green:#16a34a;--green-dim:rgba(22,163,74,.1);
+  --amber:#d97706;--amber-dim:rgba(217,119,6,.1);
+  --red:#dc2626;--red-dim:rgba(220,38,38,.1);
+  --blue:#2563eb;--blue-dim:rgba(37,99,235,.1);
+}
+.theme-toggle{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s;outline:none}
+.theme-toggle:hover{background:var(--bg3);color:var(--text)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;display:flex;overflow:hidden}
 .sidebar{width:var(--sidebar-w);height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
@@ -41,8 +53,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .topbar-right{display:flex;align-items:center;gap:8px}
 .period-chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);color:var(--text2);background:var(--bg3);cursor:pointer}
 .period-chip.active{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
-.target-chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.2);cursor:pointer}
-.target-chip:hover{opacity:.8}
+.period-select{appearance:none;background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:6px 28px 6px 14px;border-radius:20px;font-size:11.5px;font-weight:500;cursor:pointer;outline:none;transition:all .2s;font-family:inherit}
+.period-select:hover{border-color:var(--purple);color:var(--purple)}
+.period-select:focus{border-color:var(--purple);box-shadow:0 0 0 2px var(--purple-dim)}
+.custom-select-wrapper{position:relative;display:inline-flex;align-items:center}
+.custom-select-wrapper::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--text3);pointer-events:none}
+.target-chip{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:6px 14px;border-radius:20px;background:linear-gradient(90deg, rgba(251,191,36,0.1), rgba(245,158,11,0.05));color:var(--amber);border:1px solid rgba(251,191,36,.3);cursor:pointer;transition:all .2s}
+.target-chip:hover{background:rgba(251,191,36,.15);border-color:var(--amber)}
+.target-chip svg{width:12px;height:12px}
 .content{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px}
 .page{display:none}.page.active{display:contents}
 .metric-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
@@ -166,6 +184,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".6"/></svg>
       Dashboard
     </div>
+
     <div class="nav-item" data-page="pipeline" onclick="navigate('pipeline')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h9M2 12h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       Pipeline
@@ -174,6 +193,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Bán hàng</div>
+    <div class="nav-item" data-page="all-data" onclick="navigate('all-data')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Tất cả Dữ liệu
+    </div>
     <div class="nav-item" data-page="hot-leads" onclick="navigate('hot-leads')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M8 2c0 3-3 4-3 7a3 3 0 006 0c0-3-3-4-3-7z" stroke="currentColor" stroke-width="1.5"/></svg>
       HOT Leads
@@ -238,6 +261,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M4 2h6l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/></svg>
       Quy trình (SOP)
     </div>
+    <div class="nav-item" data-page="settings" onclick="navigate('settings')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M7 2h2m-1-1v2m-4.5 2l1.5 1.5m-2.1-.6l1.4 1.4m6 0l1.4-1.4m-2.1.6l1.5-1.5M2 8h2m-1-1v2m10-1h2m-1-1v2m-6 4h2m-1-1v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+      Cài đặt chung
+    </div>
     <div class="nav-item" onclick="openTargetModal()">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="1" fill="currentColor"/></svg>
       Chỉnh Target
@@ -253,9 +280,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   <div class="topbar">
     <div><div class="topbar-title" id="page-title">Dashboard</div><div class="topbar-sub" id="page-date"></div></div>
     <div class="topbar-right">
-      <div class="period-chip" id="p1" onclick="setPeriod(1)">P1: 01/4 – 20/4</div>
-      <div class="period-chip active" id="p2" onclick="setPeriod(2)">P2: 20/4 – 20/5</div>
-      <div class="target-chip" id="target-chip" onclick="openTargetModal()">Target: 340.000.000đ ✎</div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Bật/Tắt Giao diện">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <div class="custom-select-wrapper">
+        <select class="period-select" id="period-selector" onchange="setPeriod(this.value)">
+          <option value="M4">Tháng 4/2026</option>
+          <option value="M5">Tháng 5/2026</option>
+          <option value="M6">Tháng 6/2026</option>
+        </select>
+      </div>
+      <div class="target-chip" id="target-chip" onclick="openTargetModal()">
+        <span id="target-val">Target: 340.000.000đ</span>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 3a2 2 0 112.8 2.8L4.5 15H2v-2.5L11 3z"></path></svg>
+      </div>
     </div>
   </div>
   <div class="content">
@@ -386,7 +424,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 
     <!-- PAGE: TIẾN ĐỘ -->
     <div class="page" id="page-tien-do">
-      <div class="coming-soon"><div class="cs-icon">🗂</div><div class="cs-title">Tiến độ Dự án — Module 2</div><div class="cs-desc">Theo dõi milestone, deadline, % hoàn thành từng dự án đang chạy.</div></div>
+      <div id="tien-do-content" style="display:contents"></div>
+    </div>
+
+    <!-- PAGE: ALL DATA -->
+    <div class="page" id="page-all-data">
+      <div id="all-data-content" style="display:contents"></div>
+    </div>
+
+    <!-- PAGE: SETTINGS -->
+    <div class="page" id="page-settings">
+      <div id="settings-content" style="display:contents"></div>
     </div>
 
     <!-- PAGE: NHẮC VIỆC -->
@@ -469,7 +517,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
       <div class="form-row">
         <div><label>Next action</label><input id="f-next" placeholder="Gọi lại, gửi proposal..."></div>
         <div><label>Giao đoạn</label>
-          <select id="f-period"><option value="P2">P2: 20/4 – 20/5</option><option value="P1">P1: 01/4 – 20/4</option></select></div>
+          <select id="f-period"><option value="M4">Tháng 4/2026</option><option value="M5" selected>Tháng 5/2026</option><option value="M6">Tháng 6/2026</option></select></div>
       </div>
       <div class="form-row full"><div><label>Vấn đề / Nỗi đau</label><textarea id="f-pain" placeholder="Không tăng được đơn, không có content..."></textarea></div></div>
       <div class="form-row full"><div><label>Ghi chú</label><textarea id="f-note" placeholder="Lịch sử liên hệ, thông tin thêm..."></textarea></div></div>
@@ -498,10 +546,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   <div class="modal-box" style="width:640px">
     <div class="modal-hd"><div class="modal-title">Chỉnh Target</div><button class="modal-close" onclick="closeTargetModal()">×</button></div>
     <div class="modal-body">
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <div class="period-chip active" id="tm-p1" onclick="setTMPeriod('P1')">P1: 01/4–20/4</div>
-        <div class="period-chip" id="tm-p2" onclick="setTMPeriod('P2')">P2: 20/4–20/5</div>
-      </div>
+      <div id="tm-periods" style="display:flex;gap:8px;margin-bottom:16px"></div>
       <div class="form-row">
         <div><label>Target tổng (₫)</label><input id="tm-total" type="number" oninput="updateTMPcts()"></div>
         <div><label>Lý do thay đổi *</label><input id="tm-reason" placeholder="Tháng 5 tăng headcount..."></div>
@@ -538,31 +583,62 @@ const STAGES_DEF = [
 const STAGES_ORDER = STAGES_DEF.map(s => s.key);
 const BADGE_MAP = { hot:'badge-hot', warm:'badge-warm', proposal:'badge-proposal', neg:'badge-neg', won:'badge-won', lost:'badge-lost', cold:'badge-cold' };
 
+let appSettings = JSON.parse(localStorage.getItem('zcom_settings')) || {
+  sales: ['Hường', 'Vũ', 'Trang', 'Nguyên', 'Vân Anh', 'Hùng', 'Thiện'],
+  projects: [
+    { id: 'ZME_TTS|15000000', name: 'ZME TikTok — 15tr' },
+    { id: 'ZME_S|25000000', name: 'ZME Shopee — 25tr' },
+    { id: 'ZHUB|20000000', name: 'ZHUB Livestream — 20tr' },
+    { id: 'ZMKT|10000000', name: 'ZMKT Media — 10tr' },
+    { id: 'MERCY|20000000', name: 'Mercy AI — 20tr' }
+  ]
+};
+
 // Default Initial Data
 let defaultClients = [
-  { id:1, name:'Công ty ABC', industry:'Thời trang', platform:'Shopee + TikTok', package:'ZME_TTS|15000000', price:15000000, stage:'won', owner:'Hường', note:'Đã ký HĐ', src:'Social', deadlineDays:-3, gmv:50, originate:'Hường', closer:'Hường', contractDate:'2026-05-01', billStatus:'INVOICED', amountPaid:15000000, contractStatus:'SIGNED', period:'P2' },
-  { id:2, name:'Startup XYZ', industry:'F&B', platform:'TikTok Shop', package:'ZMKT|10000000', price:10000000, stage:'proposal', owner:'Hường', note:'Chờ phản hồi', src:'Network', deadlineDays:2, gmv:100, period:'P2' },
-  { id:3, name:'Nhà hàng Bảo Phúc', industry:'F&B', platform:'Shopee', package:'ZME_S|25000000', price:25000000, stage:'hot', owner:'Hường', note:'Gọi hôm nay', src:'Social', deadlineDays:0, period:'P2' },
-  { id:4, name:'Spa Linh Đan', industry:'Làm đẹp', platform:'Chưa có sàn', package:'ZHUB|20000000', price:20000000, stage:'warm', owner:'Hường', note:'Đang tư vấn', src:'Network', deadlineDays:8, period:'P2' },
-  { id:5, name:'Thời trang Mây', industry:'Thời trang', platform:'Shopee', package:'ZME_S|25000000', price:25000000, stage:'neg', owner:'Hường', note:'Đang ép giá', src:'Social', deadlineDays:5, period:'P2' },
-  { id:6, name:'Cafe Phố Cổ', industry:'F&B', platform:'TikTok Shop', package:'ZMKT|10000000', price:10000000, stage:'hot', owner:'Lan', note:'Ngủ đông', src:'Social', deadlineDays:-8, period:'P2' }
+  { id:1, name:'Công ty ABC', industry:'Thời trang', platform:'Shopee + TikTok', package:'ZME_TTS|15000000', price:15000000, stage:'won', owner:'Hường', note:'Đã ký HĐ', src:'Social', deadlineDays:-3, gmv:50, originate:'Hường', closer:'Hường', contractDate:'2026-05-01', billStatus:'INVOICED', amountPaid:15000000, contractStatus:'SIGNED', period:'M5' },
+  { id:2, name:'Startup XYZ', industry:'F&B', platform:'TikTok Shop', package:'ZMKT|10000000', price:10000000, stage:'proposal', owner:'Hường', note:'Chờ phản hồi', src:'Network', deadlineDays:2, gmv:100, period:'M5' },
+  { id:3, name:'Nhà hàng Bảo Phúc', industry:'F&B', platform:'Shopee', package:'ZME_S|25000000', price:25000000, stage:'hot', owner:'Hường', note:'Gọi hôm nay', src:'Social', deadlineDays:0, period:'M5' },
+  { id:4, name:'Spa Linh Đan', industry:'Làm đẹp', platform:'Chưa có sàn', package:'ZHUB|20000000', price:20000000, stage:'warm', owner:'Hường', note:'Đang tư vấn', src:'Network', deadlineDays:8, period:'M5' },
+  { id:5, name:'Thời trang Mây', industry:'Thời trang', platform:'Shopee', package:'ZME_S|25000000', price:25000000, stage:'neg', owner:'Hường', note:'Đang ép giá', src:'Social', deadlineDays:5, period:'M5' },
+  { id:6, name:'Cafe Phố Cổ', industry:'F&B', platform:'TikTok Shop', package:'ZMKT|10000000', price:10000000, stage:'hot', owner:'Lan', note:'Ngủ đông', src:'Social', deadlineDays:-8, period:'M5' }
 ];
 
 let clients = JSON.parse(localStorage.getItem('zcom_clients')) || defaultClients;
-let currentPeriod = localStorage.getItem('zcom_period') || 'P2';
+let currentPeriod = localStorage.getItem('zcom_period') || 'M5';
 let currentPage = 'dashboard';
 let dealView = 'list';
 let selectedOwner = 'all';
 
 // Targets
-let TARGETS_DEF = { P1: { total: 340000000, zme: 153000000, zmkt: 102000000, zhub: 51000000, mercy: 34000000 }, P2: { total: 340000000, zme: 153000000, zmkt: 102000000, zhub: 51000000, mercy: 34000000 } };
-let PERIODS = { P1: { target: 340000000, targets: TARGETS_DEF.P1, weeks: [ {id:'W1', name:'Tuần 1', dates:'1/4-7/4'}, {id:'W2', name:'Tuần 2', dates:'8/4-14/4'}, {id:'W3', name:'Tuần 3', dates:'15/4-20/4'} ] }, P2: { target: 340000000, targets: TARGETS_DEF.P2, weeks: [ {id:'W1', name:'Tuần 1', dates:'20/4-27/4'}, {id:'W2', name:'Tuần 2', dates:'28/4-5/5'}, {id:'W3', name:'Tuần 3', dates:'6/5-12/5'}, {id:'W4', name:'Tuần 4', dates:'13/5-20/5'} ] } };
-let zcom_targets_P1 = JSON.parse(localStorage.getItem('zcom_targets_P1'));
-let zcom_targets_P2 = JSON.parse(localStorage.getItem('zcom_targets_P2'));
-if(zcom_targets_P1) PERIODS.P1.targets = zcom_targets_P1;
-if(zcom_targets_P2) PERIODS.P2.targets = zcom_targets_P2;
+let TARGETS_DEF = { 
+  M4: { total: 340000000, zme: 153000000, zmkt: 102000000, zhub: 51000000, mercy: 34000000 }, 
+  M5: { total: 340000000, zme: 153000000, zmkt: 102000000, zhub: 51000000, mercy: 34000000 },
+  M6: { total: 340000000, zme: 153000000, zmkt: 102000000, zhub: 51000000, mercy: 34000000 }
+};
 
-// ================= HELPERS =================
+let PERIODS = { 
+  M4: { target: 340000000, targets: TARGETS_DEF.M4, weeks: [ {id:'W1', name:'Tuần 1', dates:'1/4-7/4'}, {id:'W2', name:'Tuần 2', dates:'8/4-14/4'}, {id:'W3', name:'Tuần 3', dates:'15/4-21/4'}, {id:'W4', name:'Tuần 4', dates:'22/4-30/4'} ] }, 
+  M5: { target: 340000000, targets: TARGETS_DEF.M5, weeks: [ {id:'W1', name:'Tuần 1', dates:'1/5-7/5'}, {id:'W2', name:'Tuần 2', dates:'8/5-14/5'}, {id:'W3', name:'Tuần 3', dates:'15/5-21/5'}, {id:'W4', name:'Tuần 4', dates:'22/5-31/5'} ] },
+  M6: { target: 340000000, targets: TARGETS_DEF.M6, weeks: [ {id:'W1', name:'Tuần 1', dates:'1/6-7/6'}, {id:'W2', name:'Tuần 2', dates:'8/6-14/6'}, {id:'W3', name:'Tuần 3', dates:'15/6-21/6'}, {id:'W4', name:'Tuần 4', dates:'22/6-30/6'} ] }
+};
+
+['M4','M5','M6'].forEach(m => {
+  let saved = JSON.parse(localStorage.getItem('zcom_targets_' + m));
+  if(saved) PERIODS[m].targets = saved;
+});
+
+// ================= HELPERS & THEME =================
+function toggleTheme() {
+  const root = document.documentElement;
+  const current = root.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem('zcom_theme', next);
+}
+const savedTheme = localStorage.getItem('zcom_theme');
+if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
 function fmtV(n) { return (n/1000000).toFixed(1) + 'tr'; }
 function fmt(n) { return new Intl.NumberFormat('vi-VN').format(n); }
 function dayLabel(d) {
@@ -592,10 +668,10 @@ function navigate(page) {
   currentPage = page;
 
   const titles = {
-    'dashboard':'Dashboard','pipeline':'Pipeline','hot-leads':'HOT Leads',
+    'dashboard':'Dashboard','all-data':'Tất cả Dữ liệu (Master)','pipeline':'Pipeline','hot-leads':'HOT Leads',
     'de-xuat':'Đề xuất gửi','won':'Đã chốt (WON)','lost':'Mất deal (LOST)',
     'doanh-so':'Doanh số','luong-b':'Lương B (HH)','tien-do':'Tiến độ Dự án',
-    'nhac-viec':'Nhắc việc','sop':'Quy trình SOP',
+    'nhac-viec':'Nhắc việc','sop':'Quy trình SOP','settings':'Cài đặt hệ thống',
     'tai-chinh':'Tài chính chi tiết','remarketing':'Remarketing & Upsell'
   };
   document.getElementById('page-title').textContent = titles[page] || page;
@@ -606,8 +682,11 @@ function navigate(page) {
   if(page === 'won') renderWon();
   if(page === 'doanh-so') renderDoanhSo();
   if(page === 'luong-b') renderLuongB();
+  if(page === 'tien-do') renderTienDo();
   if(page === 'tai-chinh') renderTaiChinh();
   if(page === 'remarketing') renderRemarketing();
+  if(page === 'all-data') renderAllData();
+  if(page === 'settings') renderSettings();
 }
 
 function dashTab(t) {
@@ -635,12 +714,20 @@ function plTab(t) {
   if(t === 'kpi') renderKPI();
 }
 
+function updateTargetChip() {
+  const target = PERIODS[currentPeriod].target;
+  const act = typeof getActiveClients !== 'undefined' ? getActiveClients() : clients;
+  const rev = act.filter(c => c.stage === 'won').reduce((s,c) => s + (c.price||0), 0);
+  const pct = Math.round((rev / (target||1)) * 100);
+  document.getElementById('target-val').innerHTML = `Target: ${fmt(target)}đ <span style="opacity:0.8;font-weight:400;font-size:10px">(Đạt ${pct}%)</span>`;
+}
+
 function setPeriod(p) {
-  currentPeriod = 'P' + p;
-  document.getElementById('p1').classList.toggle('active', p === 1);
-  document.getElementById('p2').classList.toggle('active', p === 2);
+  currentPeriod = p;
+  const sel = document.getElementById('period-selector');
+  if(sel && sel.value != p) sel.value = p;
   localStorage.setItem('zcom_period', currentPeriod);
-  document.getElementById('target-chip').innerHTML = `Target: ${fmt(PERIODS[currentPeriod].target)}đ ✎`;
+  updateTargetChip();
   renderDashboard();
   if(currentPage === 'pipeline') renderPipeline();
 }
@@ -911,7 +998,12 @@ function renderLuongB() {
 
 // ================= MODAL & CRUD =================
 function openDealModal() {
-  document.getElementById('deal-modal').classList.add('show');
+  const saleOptions = appSettings.sales.map(s => `<option value="${s}">${s}</option>`).join('');
+  document.getElementById('f-owner').innerHTML = saleOptions;
+  document.getElementById('f-originate').innerHTML = `<option value="">--</option>` + saleOptions;
+  document.getElementById('f-closer').innerHTML = `<option value="">--</option>` + saleOptions;
+  document.getElementById('f-package').innerHTML = appSettings.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('') + `<option value="CUSTOM">Tùy chỉnh...</option>`;
+
   document.getElementById('f-id').value = '';
   document.getElementById('f-name').value = '';
   document.getElementById('f-industry').value = '';
@@ -1037,8 +1129,10 @@ function openTargetModal() {
 function closeTargetModal() { document.getElementById('target-modal').classList.remove('show'); }
 function setTMPeriod(p) {
   tmPeriod = p;
-  document.getElementById('tm-p1').classList.toggle('active', p === 'P1');
-  document.getElementById('tm-p2').classList.toggle('active', p === 'P2');
+  const labels = { M4: 'Tháng 4', M5: 'Tháng 5', M6: 'Tháng 6' };
+  document.getElementById('tm-periods').innerHTML = Object.keys(PERIODS).map(k => 
+    `<div class="period-chip ${tmPeriod === k ? 'active' : ''}" onclick="setTMPeriod('${k}')">${labels[k]}</div>`
+  ).join('');
   const tg = PERIODS[p].targets;
   document.getElementById('tm-total').value = tg.total;
   document.getElementById('tm-zme').value = tg.zme;
@@ -1844,6 +1938,267 @@ function renderRemarketing() {
       </div>
     </div>
   `;
-}</script>
+}// ================= MODULE 2: TIẾN ĐỘ DỰ ÁN & VẬN HÀNH =================
+function renderTienDo() {
+  const el = document.getElementById('tien-do-content');
+  if(!el) return;
+  const activeClients = typeof getActiveClients !== 'undefined' ? getActiveClients() : clients;
+  
+  // Lấy các deal WON để làm dự án
+  const won = activeClients.filter(d => d.stage === 'won');
+  
+  // Mock dữ liệu vận hành cho các deal WON (trong thực tế sẽ lấy từ DB)
+  const projects = won.map(d => {
+    // Random một số status cho demo
+    const statuses = ['kickoff', 'production', 'qc', 'delivered'];
+    const pStatus = d.id % 4 === 0 ? 'delivered' : statuses[d.id % 3]; 
+    const supplierCost = (d.price || 0) * (0.15 + (d.id % 10)/100); // Cost 15-25%
+    return {
+      ...d,
+      projectStage: pStatus,
+      daysToClose: 14 + (d.id % 10), // Deal velocity (ngày)
+      supplierCost: supplierCost,
+      realMargin: (d.price || 0) - supplierCost,
+      supplierScore: 8 + (d.id % 3), // Điểm 8-10
+      nps: pStatus === 'delivered' ? 4.5 + (d.id % 2)/2 : null, // NPS 4.5 - 5.0
+      isLate: pStatus !== 'delivered' && (d.deadlineDays || 0) <= 0
+    };
+  });
+
+  const delivered = projects.filter(p => p.projectStage === 'delivered');
+  
+  // Tính toán KPI Period
+  const avgVelocity = projects.length ? Math.round(projects.reduce((s, p) => s + p.daysToClose, 0) / projects.length) : 0;
+  const onTimeRate = delivered.length ? Math.round((delivered.filter(p => !p.isLate).length / delivered.length) * 100) : 100;
+  const avgSupScore = projects.length ? (projects.reduce((s, p) => s + p.supplierScore, 0) / projects.length).toFixed(1) : 0;
+  const avgNps = delivered.length ? (delivered.reduce((s, p) => s + p.nps, 0) / delivered.length).toFixed(1) : 0;
+
+  // Render HTML
+  el.innerHTML = `
+    <!-- BỘ CHỈ SỐ THEO DÕI THEO PERIOD -->
+    <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px">KPI Vận Hành & Delivery</div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px">
+      <div class="kpi-card"><div class="kpi-label">Deal Velocity</div><div class="kpi-value" style="color:var(--blue)">${avgVelocity} ngày</div><div class="kpi-sub">Lead → WON (Tốc độ chốt)</div></div>
+      <div class="kpi-card"><div class="kpi-label">On-time Delivery</div><div class="kpi-value" style="color:${onTimeRate>=90?'var(--green)':'var(--red)'}">${onTimeRate}%</div><div class="kpi-sub">Tỉ lệ dự án đúng hạn</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Supplier Score</div><div class="kpi-value">${avgSupScore}/10</div><div class="kpi-sub">Chất lượng đối tác</div></div>
+      <div class="kpi-card"><div class="kpi-label">Satisfaction Score</div><div class="kpi-value" style="color:var(--purple)">${avgNps}/5.0</div><div class="kpi-sub">Đánh giá sau bàn giao</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- DANH SÁCH DỰ ÁN ĐANG CHẠY -->
+      <div class="p-panel" style="margin-bottom:0">
+        <div class="p-panel-head">
+          <div class="p-panel-title">Bảng Theo Dõi Tiến Độ (Active Projects)</div>
+          <div style="font-size:11px;color:var(--text3)">Liên kết từ Deals đã WON</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="deal-table">
+            <thead><tr><th>Dự án / Khách hàng</th><th>Trạng thái VH</th><th>Deadline</th><th>Cảnh báo (Triggers)</th><th>Supplier Cost</th><th>Hành động</th></tr></thead>
+            <tbody>
+              ${projects.length ? projects.map(p => {
+                const stages = {
+                  'kickoff': { l: '1. Kickoff', c: 'badge-warm' },
+                  'production': { l: '2. Sản xuất', c: 'badge-proposal' },
+                  'qc': { l: '3. Review / QC', c: 'badge-neg' },
+                  'delivered': { l: '4. Bàn giao', c: 'badge-won' }
+                };
+                const st = stages[p.projectStage];
+                const alerts = [];
+                if (p.isLate) alerts.push('<span style="color:var(--red);font-weight:500">🔥 Deadline hôm nay/Quá hạn</span>');
+                if (p.projectStage === 'delivered') alerts.push('<span style="color:var(--blue)">⏳ Đợi 90 ngày Upsell</span>');
+                
+                return `
+                <tr>
+                  <td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">Owner: ${p.owner}</div></td>
+                  <td><span class="badge ${st.c}">${st.l}</span></td>
+                  <td style="font-size:12px;color:var(--text2)">${dayLabelP(p.deadlineDays||0)}</td>
+                  <td style="font-size:11px">${alerts.join('<br>') || '<span style="color:var(--text3)">Đang on-track</span>'}</td>
+                  <td style="font-weight:500;color:var(--amber)">${fmtVp(p.supplierCost)}đ</td>
+                  <td><button class="btn btn-sm" onclick="alert('Cập nhật tiến độ dự án')">Update</button></td>
+                </tr>
+              `}).join('') : `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Chưa có dự án nào đang chạy</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TỔNG KẾT MARGIN -->
+      <div class="p-panel" style="margin-bottom:0">
+        <div class="p-panel-head"><div class="p-panel-title">Margin Thực Tế</div></div>
+        <div class="p-panel-body" style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Tổng Revenue (Booked)</div>
+            <div style="font-weight:600;font-size:15px;color:var(--green)">${fmtVp(projects.reduce((s,p)=>s+p.price,0))}đ</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Chi phí Supplier / Phụ trợ</div>
+            <div style="font-weight:600;font-size:15px;color:var(--amber)">- ${fmtVp(projects.reduce((s,p)=>s+p.supplierCost,0))}đ</div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:14px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Lợi nhuận gộp (Real Margin)</div>
+            <div style="font-weight:600;font-size:18px;color:var(--purple)">${fmtVp(projects.reduce((s,p)=>s+p.realMargin,0))}đ</div>
+          </div>
+          
+          <div style="margin-top:8px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);padding:10px;border-radius:6px">
+             <div style="font-size:11px;font-weight:600;color:var(--blue);margin-bottom:4px">Trigger Đã Kích Hoạt</div>
+             <ul style="font-size:11px;color:var(--text2);margin-left:14px;line-height:1.6">
+               <li>Quá hạn: <strong>${projects.filter(p=>p.isLate).length}</strong> dự án</li>
+               <li>Upsell chờ (90 ngày): <strong>${delivered.length}</strong> dự án</li>
+             </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+// ================= MODULE 5: MASTER DATA (ALL CLIENTS) =================
+let allDataFilters = { period:'all', product:'all', owner:'all', stage:'all' };
+
+function renderAllData() {
+  const el = document.getElementById('all-data-content');
+  if(!el) return;
+  
+  // Apply filters
+  let filtered = clients.filter(c => {
+    if(allDataFilters.period !== 'all' && c.period !== allDataFilters.period) return false;
+    if(allDataFilters.product !== 'all' && getProductKey(c) !== allDataFilters.product) return false;
+    if(allDataFilters.owner !== 'all' && c.owner !== allDataFilters.owner) return false;
+    if(allDataFilters.stage !== 'all' && c.stage !== allDataFilters.stage) return false;
+    return true;
+  });
+
+  const wonClients = filtered.filter(c => c.stage === 'won');
+  const totalRev = wonClients.reduce((s,c)=>s+(c.price||0),0);
+  const winRate = filtered.length ? Math.round((wonClients.length/filtered.length)*100) : 0;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px">
+      <div class="kpi-card"><div class="kpi-label">Tổng khách hàng</div><div class="kpi-value">${filtered.length}</div><div class="kpi-sub">Theo bộ lọc</div></div>
+      <div class="kpi-card"><div class="kpi-label">Tổng khách WON</div><div class="kpi-value" style="color:var(--green)">${wonClients.length}</div><div class="kpi-sub">Win Rate: ${winRate}%</div></div>
+      <div class="kpi-card"><div class="kpi-label">Tổng giá trị (WON)</div><div class="kpi-value" style="color:var(--purple)">${fmtVp(totalRev)}đ</div><div class="kpi-sub">Doanh thu chốt được</div></div>
+      <div class="kpi-card"><div class="kpi-label">Giá trị trung bình</div><div class="kpi-value" style="color:var(--blue)">${wonClients.length ? fmtVp(totalRev/wonClients.length) : 0}đ</div><div class="kpi-sub">Avg Deal Size</div></div>
+    </div>
+
+    <div class="p-panel" style="margin-bottom:0">
+      <div class="p-panel-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div class="p-panel-title">Tất cả Khách hàng (Master DB)</div>
+        <div style="display:flex;gap:8px">
+          <select style="background:var(--bg);color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px" onchange="allDataFilters.period=this.value;renderAllData()">
+            <option value="all">Tháng: Tất cả</option>
+            ${Object.keys(PERIODS).map(p=>'<option value="'+p+'" '+(allDataFilters.period===p?'selected':'')+'>'+p+'</option>').join('')}
+          </select>
+          <select style="background:var(--bg);color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px" onchange="allDataFilters.product=this.value;renderAllData()">
+            <option value="all">Dịch vụ: Tất cả</option>
+            <option value="ZME" ${allDataFilters.product==='ZME'?'selected':''}>ZME</option>
+            <option value="ZMKT" ${allDataFilters.product==='ZMKT'?'selected':''}>ZMKT</option>
+            <option value="ZHUB" ${allDataFilters.product==='ZHUB'?'selected':''}>ZHUB</option>
+            <option value="MERCY" ${allDataFilters.product==='MERCY'?'selected':''}>MERCY</option>
+          </select>
+          <select style="background:var(--bg);color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px" onchange="allDataFilters.owner=this.value;renderAllData()">
+            <option value="all">Sale: Tất cả</option>
+            ${[...new Set(clients.map(c=>c.owner))].map(o=>'<option value="'+o+'" '+(allDataFilters.owner===o?'selected':'')+'>'+o+'</option>').join('')}
+          </select>
+          <select style="background:var(--bg);color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:12px" onchange="allDataFilters.stage=this.value;renderAllData()">
+            <option value="all">Trạng thái: Tất cả</option>
+            <option value="won" ${allDataFilters.stage==='won'?'selected':''}>WON</option>
+            <option value="hot" ${allDataFilters.stage==='hot'?'selected':''}>HOT</option>
+            <option value="warm" ${allDataFilters.stage==='warm'?'selected':''}>WARM</option>
+            <option value="neg" ${allDataFilters.stage==='neg'?'selected':''}>Negotiation</option>
+            <option value="lost" ${allDataFilters.stage==='lost'?'selected':''}>LOST</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="deal-table">
+          <thead><tr><th>Tên KH / Ngành</th><th>Tháng / Nguồn</th><th>Sale</th><th>Dịch vụ</th><th>Giá trị</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+            ${filtered.length ? filtered.map(c => {
+              const bg = {hot:'var(--red)',warm:'var(--amber)',neg:'var(--purple)',won:'var(--green)',lost:'var(--text3)'}[c.stage]||'var(--text2)';
+              return `<tr>
+                <td><div style="font-weight:500">${c.name}</div><div style="font-size:11px;color:var(--text3)">${c.industry}</div></td>
+                <td><div style="font-weight:500">${c.period}</div><div style="font-size:11px;color:var(--text3)">${c.src||'N/A'}</div></td>
+                <td style="font-weight:500">${c.owner}</td>
+                <td style="font-size:12px">${c.package.split('|')[0]}</td>
+                <td style="font-weight:500">${fmtVp(c.price||0)}đ</td>
+                <td><span class="badge" style="background:${bg};color:#fff;border:none">${c.stage.toUpperCase()}</span></td>
+              </tr>`
+            }).join('') : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3)">Không tìm thấy dữ liệu phù hợp với bộ lọc</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ================= MODULE 6: SETTINGS =================
+function renderSettings() {
+  const el = document.getElementById('settings-content');
+  if(!el) return;
+  
+  el.innerHTML = `
+    <div class="p-panel" style="margin-bottom:20px">
+      <div class="p-panel-head"><div class="p-panel-title">Quản lý Nhân sự (Sales)</div></div>
+      <div style="padding:16px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          ${appSettings.sales.map((s,i) => `<span class="badge" style="background:var(--bg3);color:var(--text);font-size:13px;padding:6px 12px;border:1px solid var(--border)">${s} <button onclick="removeSetting('sales', ${i})" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:8px;font-weight:bold">×</button></span>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="new-sale" placeholder="Tên nhân sự mới..." style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <button class="btn btn-primary" onclick="addSetting('sales')">Thêm</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-panel">
+      <div class="p-panel-head"><div class="p-panel-title">Quản lý Dịch vụ / Dự án</div></div>
+      <div style="padding:16px">
+        <table class="deal-table" style="margin-bottom:16px">
+          <thead><tr><th>Mã & Giá trị</th><th>Tên hiển thị</th><th>Thao tác</th></tr></thead>
+          <tbody>
+            ${appSettings.projects.map((p,i) => `<tr>
+              <td style="font-family:monospace">${p.id}</td>
+              <td style="font-weight:500">${p.name}</td>
+              <td><button onclick="removeSetting('projects', ${i})" class="btn" style="color:var(--red);border-color:rgba(248,113,113,.2);background:rgba(248,113,113,.05)">Xóa</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+          <div><label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">Mã|Giá (VD: ZME|15000000)</label><input type="text" id="new-proj-id" placeholder="Mã..." style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+          <div><label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">Tên hiển thị</label><input type="text" id="new-proj-name" placeholder="Tên..." style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
+          <button class="btn btn-primary" onclick="addSetting('projects')">Thêm Gói</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addSetting(type) {
+  if (type === 'sales') {
+    const val = document.getElementById('new-sale').value.trim();
+    if(!val) return;
+    if(appSettings.sales.includes(val)) return alert('Đã tồn tại!');
+    appSettings.sales.push(val);
+  } else if (type === 'projects') {
+    const id = document.getElementById('new-proj-id').value.trim();
+    const name = document.getElementById('new-proj-name').value.trim();
+    if(!id || !name) return alert('Vui lòng nhập đủ thông tin!');
+    appSettings.projects.push({ id, name });
+  }
+  saveSettings();
+}
+
+function removeSetting(type, index) {
+  if(!confirm('Bạn có chắc muốn xóa?')) return;
+  appSettings[type].splice(index, 1);
+  saveSettings();
+}
+
+function saveSettings() {
+  localStorage.setItem('zcom_settings', JSON.stringify(appSettings));
+  renderSettings();
+  renderDashboard();
+  if(currentPage === 'pipeline') renderPipeline();
+}
+</script>
 </body>
 </html>
