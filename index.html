@@ -1009,19 +1009,33 @@ function openDealModal() {
   document.getElementById('f-industry').value = '';
   document.getElementById('f-platform').value = '';
   document.getElementById('f-gmv').value = '';
+  document.getElementById('f-src').value = 'Social';
+  document.getElementById('f-stage').value = 'warm';
+  document.getElementById('f-period').value = currentPeriod;
   document.getElementById('f-price').value = '';
   document.getElementById('f-comm').value = '';
   document.getElementById('f-pain').value = '';
   document.getElementById('f-note').value = '';
+  document.getElementById('f-bill').value = '';
   document.getElementById('f-paid').value = '';
+  document.getElementById('f-contract').value = '';
   document.getElementById('f-contract-date').value = '';
-  document.getElementById('f-pay-date').value = '';
   document.getElementById('deal-modal-title').textContent = 'Thêm khách hàng mới';
+  calcComm();
+  document.getElementById('deal-modal').classList.add('show');
 }
 
 function editDeal(id) {
   const d = clients.find(c => c.id === id);
   if(!d) return;
+
+  // Inject dynamic options from settings first
+  const saleOptions = appSettings.sales.map(s => `<option value="${s}">${s}</option>`).join('');
+  document.getElementById('f-owner').innerHTML = saleOptions;
+  document.getElementById('f-originate').innerHTML = `<option value="">--</option>` + saleOptions;
+  document.getElementById('f-closer').innerHTML = `<option value="">--</option>` + saleOptions;
+  document.getElementById('f-package').innerHTML = appSettings.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('') + `<option value="CUSTOM">Tùy chỉnh...</option>`;
+
   document.getElementById('f-id').value = d.id;
   document.getElementById('f-name').value = d.name || '';
   document.getElementById('f-industry').value = d.industry || '';
@@ -1031,7 +1045,7 @@ function editDeal(id) {
   document.getElementById('f-package').value = d.package || 'CUSTOM';
   document.getElementById('f-price').value = d.price || '';
   document.getElementById('f-stage').value = d.stage || 'warm';
-  document.getElementById('f-owner').value = d.owner || 'Hường';
+  document.getElementById('f-owner').value = d.owner || (appSettings.sales[0] || '');
   document.getElementById('f-originate').value = d.originate || '';
   document.getElementById('f-closer').value = d.closer || '';
   document.getElementById('f-period').value = d.period || currentPeriod;
