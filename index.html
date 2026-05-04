@@ -2164,71 +2164,178 @@ function renderAllData() {
 function renderSettings() {
   const el = document.getElementById('settings-content');
   if(!el) return;
+  const clientsSize = (JSON.stringify(clients).length / 1024).toFixed(1);
+  const settingsSize = (JSON.stringify(appSettings).length / 1024).toFixed(1);
   
   el.innerHTML = `
-    <div class="p-panel" style="margin-bottom:20px">
-      <div class="p-panel-head"><div class="p-panel-title">Quản lý Nhân sự (Sales)</div></div>
+    <div class="p-panel" style="margin-bottom:20px;border:1px solid rgba(139,124,246,.3);background:var(--purple-bg)">
+      <div class="p-panel-head"><div class="p-panel-title" style="color:var(--purple)">📦 Dữ liệu được lưu ở đâu?</div></div>
       <div style="padding:16px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-          ${appSettings.sales.map((s,i) => `<span class="badge" style="background:var(--bg3);color:var(--text);font-size:13px;padding:6px 12px;border:1px solid var(--border)">${s} <button onclick="removeSetting('sales', ${i})" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:8px;font-weight:bold">×</button></span>`).join('')}
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">🗄️</div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Nơi lưu</div>
+            <div style="font-weight:600;margin-top:4px">LocalStorage</div>
+            <div style="font-size:11px;color:var(--text3)">Trình duyệt máy bạn</div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">📊</div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Khách hàng</div>
+            <div style="font-weight:600;margin-top:4px">${clients.length} records</div>
+            <div style="font-size:11px;color:var(--text3)">~${clientsSize} KB</div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">⚙️</div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Cài đặt</div>
+            <div style="font-weight:600;margin-top:4px">${appSettings.sales.length} sales</div>
+            <div style="font-size:11px;color:var(--text3)">~${settingsSize} KB</div>
+          </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="new-sale" placeholder="Tên nhân sự mới..." style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
-          <button class="btn btn-primary" onclick="addSetting('sales')">Thêm</button>
+        <div style="background:var(--amber-dim);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:12px;font-size:12px;color:var(--amber)">
+          ⚠️ <strong>Lưu ý:</strong> Data chỉ tồn tại trên <strong>máy & trình duyệt này</strong>. Nếu xóa cache hoặc đổi máy → data mất. Hãy <strong>Export JSON</strong> thường xuyên để backup.
         </div>
       </div>
     </div>
 
-    <div class="p-panel">
-      <div class="p-panel-head"><div class="p-panel-title">Quản lý Dịch vụ / Dự án</div></div>
+    <div class="p-panel" style="margin-bottom:20px">
+      <div class="p-panel-head"><div class="p-panel-title">💾 Export / Import Dữ liệu</div></div>
+      <div style="padding:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px">
+            <div style="font-weight:600;margin-bottom:6px">⬇️ Export (Tải về máy)</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Tải data xuống file JSON để backup hoặc chuyển sang máy khác</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="exportData(\'all\')" style="flex:1">Export Toàn bộ</button>
+              <button class="btn" onclick="exportData(\'clients\')" style="flex:1">Chỉ khách hàng</button>
+            </div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px">
+            <div style="font-weight:600;margin-bottom:6px">⬆️ Import (Khôi phục)</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Khôi phục từ file JSON đã export. Data cũ sẽ bị ghi đè.</div>
+            <label class="btn btn-primary" style="cursor:pointer;display:block;text-align:center">
+              📂 Chọn file JSON...
+              <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+            </label>
+          </div>
+        </div>
+        <div id="import-preview" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="p-panel" style="margin-bottom:20px">
+      <div class="p-panel-head"><div class="p-panel-title">👥 Quản lý Nhân sự (Sales)</div></div>
+      <div style="padding:16px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          ${appSettings.sales.map((s,i) => `<span class="badge" style="background:var(--bg3);color:var(--text);font-size:13px;padding:6px 12px;border:1px solid var(--border)">${s} <button onclick="removeSetting(\'sales\', ${i})" style="background:none;border:none;color:var(--red);cursor:pointer;margin-left:8px;font-weight:bold">×</button></span>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="new-sale" placeholder="Tên nhân sự mới..." style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+          <button class="btn btn-primary" onclick="addSetting(\'sales\')">Thêm</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-panel" style="margin-bottom:20px">
+      <div class="p-panel-head"><div class="p-panel-title">📦 Quản lý Dịch vụ / Dự án</div></div>
       <div style="padding:16px">
         <table class="deal-table" style="margin-bottom:16px">
           <thead><tr><th>Mã & Giá trị</th><th>Tên hiển thị</th><th>Thao tác</th></tr></thead>
           <tbody>
             ${appSettings.projects.map((p,i) => `<tr>
-              <td style="font-family:monospace">${p.id}</td>
+              <td style="font-family:monospace;font-size:12px">${p.id}</td>
               <td style="font-weight:500">${p.name}</td>
-              <td><button onclick="removeSetting('projects', ${i})" class="btn" style="color:var(--red);border-color:rgba(248,113,113,.2);background:rgba(248,113,113,.05)">Xóa</button></td>
+              <td><button onclick="removeSetting(\'projects\', ${i})" class="btn" style="color:var(--red);border-color:rgba(248,113,113,.2);background:rgba(248,113,113,.05)">Xóa</button></td>
             </tr>`).join('')}
           </tbody>
         </table>
         <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
           <div><label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">Mã|Giá (VD: ZME|15000000)</label><input type="text" id="new-proj-id" placeholder="Mã..." style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
           <div><label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">Tên hiển thị</label><input type="text" id="new-proj-name" placeholder="Tên..." style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"></div>
-          <button class="btn btn-primary" onclick="addSetting('projects')">Thêm Gói</button>
+          <button class="btn btn-primary" onclick="addSetting(\'projects\')">Thêm Gói</button>
         </div>
+      </div>
+    </div>
+
+    <div class="p-panel" style="border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.03)">
+      <div class="p-panel-head"><div class="p-panel-title" style="color:var(--red)">⚠️ Vùng nguy hiểm</div></div>
+      <div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn" onclick="resetAllData()" style="color:var(--red);border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.06)">🗑️ Xóa toàn bộ data khách hàng</button>
+        <button class="btn" onclick="resetToDefault()" style="color:var(--red);border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.06)">🔄 Reset về mặc định ban đầu</button>
       </div>
     </div>
   `;
 }
 
-function addSetting(type) {
-  if (type === 'sales') {
-    const val = document.getElementById('new-sale').value.trim();
-    if(!val) return;
-    if(appSettings.sales.includes(val)) return alert('Đã tồn tại!');
-    appSettings.sales.push(val);
-  } else if (type === 'projects') {
-    const id = document.getElementById('new-proj-id').value.trim();
-    const name = document.getElementById('new-proj-name').value.trim();
-    if(!id || !name) return alert('Vui lòng nhập đủ thông tin!');
-    appSettings.projects.push({ id, name });
+function exportData(type) {
+  let data, filename;
+  const ts = new Date().toISOString().slice(0,10);
+  if(type === 'clients') {
+    data = { clients };
+    filename = 'zcom-clients-' + ts + '.json';
+  } else {
+    data = { clients, appSettings, exportedAt: new Date().toISOString() };
+    filename = 'zcom-backup-' + ts + '.json';
   }
-  saveSettings();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
-function removeSetting(type, index) {
-  if(!confirm('Bạn có chắc muốn xóa?')) return;
-  appSettings[type].splice(index, 1);
-  saveSettings();
+function importData(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const preview = document.getElementById('import-preview');
+      if(data.clients) {
+        window._importPending = data;
+        if(preview) {
+          preview.style.cssText = 'display:block;background:var(--green-dim);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:12px;font-size:12px;margin-top:8px';
+          preview.innerHTML = '✅ File hợp lệ: <strong>' + data.clients.length + ' khách hàng</strong>' + (data.appSettings ? ', bao gồm cài đặt' : '') + '. <button class="btn btn-primary" onclick="confirmImport()" style="margin-left:8px">Xác nhận Import</button>';
+        }
+      } else {
+        if(preview) {
+          preview.style.cssText = 'display:block;background:var(--red-dim);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:12px;font-size:12px;margin-top:8px';
+          preview.innerHTML = '❌ File không hợp lệ — không tìm thấy dữ liệu khách hàng.';
+        }
+      }
+    } catch(err) { alert('File JSON không hợp lệ: ' + err.message); }
+  };
+  reader.readAsText(file);
 }
 
-function saveSettings() {
-  localStorage.setItem('zcom_settings', JSON.stringify(appSettings));
+function confirmImport() {
+  const data = window._importPending;
+  if(!data || !confirm('Bạn có chắc muốn import ' + data.clients.length + ' records? Data hiện tại sẽ bị GHI ĐÈ!')) return;
+  clients = data.clients;
+  localStorage.setItem('zcom_clients', JSON.stringify(clients));
+  if(data.appSettings) { appSettings = data.appSettings; localStorage.setItem('zcom_settings', JSON.stringify(appSettings)); }
+  window._importPending = null;
+  alert('✅ Import thành công!');
   renderSettings();
   renderDashboard();
-  if(currentPage === 'pipeline') renderPipeline();
 }
+
+function resetAllData() {
+  if(!confirm('Xóa TOÀN BỘ data khách hàng? Không thể hoàn tác!')) return;
+  clients = [];
+  localStorage.setItem('zcom_clients', JSON.stringify(clients));
+  renderSettings();
+  renderDashboard();
+}
+
+function resetToDefault() {
+  if(!confirm('Reset về mặc định? Toàn bộ data và cài đặt sẽ bị XÓA!')) return;
+  localStorage.clear();
+  location.reload();
+}
+
+
 </script>
 </body>
 </html>
