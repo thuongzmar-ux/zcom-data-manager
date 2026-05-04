@@ -27,8 +27,9 @@
   --red:#dc2626;--red-dim:rgba(220,38,38,.1);
   --blue:#2563eb;--blue-dim:rgba(37,99,235,.1);
 }
-.theme-toggle{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s;outline:none}
-.theme-toggle:hover{background:var(--bg3);color:var(--text)}
+.theme-toggle{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);cursor:pointer;padding:7px 10px;border-radius:20px;display:flex;align-items:center;gap:6px;transition:all .2s;outline:none;font-size:12px;font-weight:500;white-space:nowrap}
+.theme-toggle:hover{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+.theme-toggle svg{width:14px;height:14px;flex-shrink:0}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;display:flex;overflow:hidden}
 .sidebar{width:var(--sidebar-w);height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
@@ -283,6 +284,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
       <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Bật/Tắt Giao diện">
         <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <span id="theme-label">Đặt sáng</span>
       </button>
       <div class="custom-select-wrapper">
         <select class="period-select" id="period-selector" onchange="setPeriod(this.value)">
@@ -634,8 +636,10 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const sun = document.getElementById('icon-sun');
   const moon = document.getElementById('icon-moon');
+  const label = document.getElementById('theme-label');
   if(sun) sun.style.display = theme === 'light' ? 'block' : 'none';
   if(moon) moon.style.display = theme === 'light' ? 'none' : 'block';
+  if(label) label.textContent = theme === 'light' ? 'Tối' : 'Sáng';
 }
 
 function toggleTheme() {
