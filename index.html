@@ -2245,7 +2245,7 @@ function renderTaiChinh() {
 function renderRemarketing() {
   const el = document.getElementById('remarketing-content');
   if(!el) return;
-  
+
   const oldClients = [
     { name:'Thời trang nam MEN', tier:'A', lastActive:'3 tháng trước', status:'upsell-ready', LTV:'150tr', LTVColor:'var(--green)' },
     { name:'Mỹ phẩm Hoa Hồng', tier:'A', lastActive:'2 tháng trước', status:'upsell-ready', LTV:'90tr', LTVColor:'var(--green)' },
@@ -2260,13 +2260,12 @@ function renderRemarketing() {
       <div class="kpi-card"><div class="kpi-label">Avg LTV</div><div class="kpi-value">45.5tr</div><div class="kpi-sub">Giá trị vòng đời KH</div></div>
       <div class="kpi-card"><div class="kpi-label">Cycle Time</div><div class="kpi-value">4.2 tháng</div><div class="kpi-sub">Khoảng cách mua lại</div></div>
     </div>
-
     <div style="display:grid;grid-template-columns:3fr 2fr;gap:16px">
       <div class="p-panel" style="margin-bottom:0">
         <div class="p-panel-head"><div class="p-panel-title">Danh sách Khách Hàng Re-engage</div></div>
         <div style="overflow-x:auto">
           <table class="deal-table">
-            <thead><tr><th>Khách hàng / Tier</th><th>Lần cuối hợp tác</th><th>LTV Hiện Tại</th><th>Gợi ý Upsell</th><th></th></tr></thead>
+            <thead><tr><th>Khách hàng / Tier</th><th>Lần cuối HT</th><th>LTV</th><th>Gợi ý Upsell</th><th></th></tr></thead>
             <tbody>
               ${oldClients.map(c => `
                 <tr>
@@ -2275,15 +2274,13 @@ function renderRemarketing() {
                   <td style="color:${c.LTVColor};font-weight:500">${c.LTV}</td>
                   <td style="font-size:12px;color:var(--purple)">Gói Affiliate / Live AI</td>
                   <td><button class="btn btn-sm btn-primary" onclick="alert('Tạo deal mới thành công')">Tạo Deal</button></td>
-                </tr>
-              `).join('')}
+                </tr>`).join('')}
             </tbody>
           </table>
         </div>
       </div>
-
       <div class="p-panel" style="margin-bottom:0">
-        <div class="p-panel-head"><div class="p-panel-title">Kịch Bản Chat (Scripts)</div></div>
+        <div class="p-panel-head"><div class="p-panel-title">Kịch Bản Chat</div></div>
         <div class="p-panel-body" style="display:flex;flex-direction:column;gap:12px">
           <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px">
             <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">1. Re-engage Khách Cũ (Sau 3 tháng)</div>
@@ -2301,97 +2298,126 @@ function renderRemarketing() {
       </div>
     </div>
   `;
-}// ================= MODULE 2: TIẾN ĐỘ DỰ ÁN & VẬN HÀNH =================
+}
+
+// ================= MODULE 2: TIẾN ĐỘ DỰ ÁN & VẬN HÀNH =================
 function renderTienDo() {
   const el = document.getElementById('tien-do-content');
   if(!el) return;
-  const activeClients = typeof getActiveClients !== 'undefined' ? getActiveClients() : clients;
-  const won = activeClients.filter(d => d.stage === 'won');
-  const projects = won.map(d => ({ ...d, isLate: (d.deadlineDays || 0) <= 0 && d.opsStage !== 'completed' }));
+  const all = typeof getActiveClients !== 'undefined' ? getActiveClients() : clients;
+  const won = all.filter(d => d.stage === 'won');
+
+  const total = won.length;
+  const completed = won.filter(p => p.opsStage === 'completed').length;
+  const upsellNow = won.filter(p => {
+    if(!p.opsEnd) return false;
+    const d = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
+    return d >= 0 && d <= 15;
+  }).length;
+  const overdue = won.filter(p => {
+    if(!p.opsEnd) return false;
+    return Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000) < 0 && p.opsStage !== 'completed';
+  }).length;
+
+  if(!window._tdFilter) window._tdFilter = 'all';
+  const stageFilter = window._tdFilter;
+
+  const projects = won.filter(p => {
+    if(stageFilter === 'all') return true;
+    if(stageFilter === 'upsell') {
+      if(!p.opsEnd) return false;
+      const d = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
+      return d >= 0 && d <= 15;
+    }
+    return (p.opsStage || 'onboarding') === stageFilter;
+  });
+
+  const filterBtns = [
+    { id:'all', label:'Tất cả', count: won.length },
+    { id:'onboarding', label:'🟡 Onboarding', count: won.filter(p=>(p.opsStage||'onboarding')==='onboarding').length },
+    { id:'setup', label:'🔵 Setup', count: won.filter(p=>p.opsStage==='setup').length },
+    { id:'running', label:'🟢 Running', count: won.filter(p=>p.opsStage==='running').length },
+    { id:'optimizing', label:'🟣 Optimizing', count: won.filter(p=>p.opsStage==='optimizing').length },
+    { id:'completed', label:'✅ Hoàn thành', count: won.filter(p=>p.opsStage==='completed').length },
+    { id:'upsell', label:'⚡ Nhắc Upsell', count: upsellNow },
+  ];
 
   el.innerHTML = `
-    <!-- BỘ CHỈ SỐ THEO DÕI THEO PERIOD -->
-    <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px">KPI Vận Hành & Delivery</div>
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px">
-      <div class="kpi-card"><div class="kpi-label">Deal Velocity</div><div class="kpi-value" style="color:var(--blue)">${avgVelocity} ngày</div><div class="kpi-sub">Lead → WON (Tốc độ chốt)</div></div>
-      <div class="kpi-card"><div class="kpi-label">On-time Delivery</div><div class="kpi-value" style="color:${onTimeRate>=90?'var(--green)':'var(--red)'}">${onTimeRate}%</div><div class="kpi-sub">Tỉ lệ dự án đúng hạn</div></div>
-      <div class="kpi-card"><div class="kpi-label">Avg Supplier Score</div><div class="kpi-value">${avgSupScore}/10</div><div class="kpi-sub">Chất lượng đối tác</div></div>
-      <div class="kpi-card"><div class="kpi-label">Satisfaction Score</div><div class="kpi-value" style="color:var(--purple)">${avgNps}/5.0</div><div class="kpi-sub">Đánh giá sau bàn giao</div></div>
+      <div class="kpi-card"><div class="kpi-label">Đang vận hành</div><div class="kpi-value" style="color:var(--blue)">${total}</div><div class="kpi-sub">Tổng dự án WON</div></div>
+      <div class="kpi-card ${overdue>0?'alert':''}"><div class="kpi-label">Quá hạn</div><div class="kpi-value" style="color:${overdue>0?'var(--red)':'var(--green)'}">${overdue}</div><div class="kpi-sub">Đã hết hạn, chưa xong</div></div>
+      <div class="kpi-card ${upsellNow>0?'warn':''}"><div class="kpi-label">Nhắc Upsell</div><div class="kpi-value" style="color:${upsellNow>0?'var(--amber)':'var(--text3)'}">${upsellNow}</div><div class="kpi-sub">Còn ≤15 ngày</div></div>
+      <div class="kpi-card"><div class="kpi-label">Hoàn thành</div><div class="kpi-value" style="color:var(--green)">${completed}</div><div class="kpi-sub">Đã bàn giao</div></div>
     </div>
-
-    <div style="margin-bottom:16px">
-      <div class="p-panel" style="margin-bottom:0">
-        <div class="p-panel-head" style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="p-panel-title">Bảng Theo Dõi Tiến Độ (Active Projects)</div>
-            <div style="font-size:11px;color:var(--text3)">Tất cả khách đang vận hành</div>
-          </div>
-          <button class="btn btn-primary" onclick="openDealModalFromOps()" style="white-space:nowrap;gap:6px;display:flex;align-items:center">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
-            Thêm khách hàng
-          </button>
-        </div>
-        <div style="overflow-x:auto">
-          <table class="deal-table">
-            <thead><tr>
-              <th>Dự án / Khách hàng</th>
-              <th>Loại dự án</th>
-              <th>Giai đoạn VH</th>
-              <th>Deadline</th>
-              <th>Nhắc Upsell</th>
-              <th>Hành động</th>
-            </tr></thead>
-            <tbody>
-              ${projects.length ? projects.map(p => {
-                const st = p.opsStage || 'onboarding';
-                const stageInfo = OPS_STAGES.find(s => s.id === st) || OPS_STAGES[0];
-                const lastLog = p.opsLog ? p.opsLog.split('\n').filter(Boolean)[0] : null;
-                const pkg = (p.package || '').toUpperCase();
-                let projectType = '—', typeColor = 'var(--text3)';
-                if (pkg.includes('ZME') || pkg.includes('XSTREAM')) { projectType = 'Xstream'; typeColor = '#8b5cf6'; }
-                else if (pkg.includes('ZMKT') || (p.platform||'').toLowerCase().includes('tiktok')) { projectType = 'TikTok'; typeColor = '#ec4899'; }
-                else if (pkg.includes('ZHUB')) { projectType = 'Zhub'; typeColor = '#f59e0b'; }
-                else if (pkg.includes('MERCY')) { projectType = 'Mercy'; typeColor = '#3b82f6'; }
-                else if ((p.platform||'').toLowerCase().includes('shopee')) { projectType = 'Shopee'; typeColor = '#f97316'; }
-                else if (p.industry) { projectType = p.industry; }
-
-                let upsellCell = '<span style="color:var(--text3);font-size:11px">—</span>';
-                if (p.opsEnd) {
-                  const daysLeft = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
-                  if (daysLeft <= 0) {
-                    upsellCell = '<span style="color:var(--red);font-weight:600;font-size:11px">🔥 Đã hết hạn!</span>';
-                  } else if (daysLeft <= 15) {
-                    upsellCell = `<span style="color:var(--amber);font-weight:600;font-size:11px">⚡ Còn ${daysLeft} ngày — Nhắc Upsell!</span>`;
-                  } else {
-                    upsellCell = `<span style="color:var(--text3);font-size:11px">Còn ${daysLeft} ngày</span>`;
-                  }
-                }
-
-                return `
-                <tr>
-                  <td>
-                    <div style="font-weight:500">${p.name}</div>
-                    <div style="font-size:11px;color:var(--text3)">Owner: ${p.owner}${p.opsStaff ? ' · VH: '+p.opsStaff : ''}</div>
-                    ${p.opsAccount ? '<div style="font-size:10px;color:var(--blue);margin-top:2px">🔗 '+p.opsAccount+'</div>' : ''}
-                    ${lastLog ? '<div style="font-size:10px;color:var(--text3);margin-top:2px;font-style:italic">'+lastLog.substring(0,60)+'</div>' : ''}
-                  </td>
-                  <td><span style="font-size:12px;font-weight:600;color:${typeColor}">${projectType}</span></td>
-                  <td><span class="badge" style="border:1px solid ${stageInfo.color};color:${stageInfo.color};background:${stageInfo.color}18;white-space:nowrap">${stageInfo.label}</span></td>
-                  <td style="font-size:12px;color:var(--text2);white-space:nowrap">${p.opsEnd ? '📅 '+p.opsEnd : (p.deadlineDays != null ? dayLabelP(p.deadlineDays) : '—')}</td>
-                  <td>${upsellCell}</td>
-                  <td style="white-space:nowrap">
-                    <button class="btn btn-sm btn-primary" onclick="openOpsModal(${p.id})" style="font-size:11px">⚙️ Update</button>
-                    <button class="btn btn-sm" onclick="editDeal(${p.id})" style="font-size:11px;margin-top:4px">✏️ Sửa</button>
-                  </td>
-                </tr>`;
-              }).join('') : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">Chưa có dự án nào. Bấm <strong>+ Thêm khách hàng</strong> để bắt đầu!</td></tr>'}
-            </tbody>
-          </table>
-        </div>
+    <div class="p-panel" style="margin-bottom:0">
+      <div class="p-panel-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div class="p-panel-title">Bảng Theo Dõi Tiến Độ Vận Hành</div>
+        <button class="btn btn-primary" onclick="openDealModalFromOps()" style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+          Thêm dự án
+        </button>
+      </div>
+      <div style="padding:0 16px 12px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+        ${filterBtns.map(f=>`<button onclick="window._tdFilter='${f.id}';renderTienDo()"
+          style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid ${stageFilter===f.id?'var(--purple)':'var(--border)'};background:${stageFilter===f.id?'rgba(139,92,246,.15)':'var(--bg3)'};color:${stageFilter===f.id?'var(--purple)':'var(--text2)'};cursor:pointer;font-weight:${stageFilter===f.id?600:400}">
+          ${f.label}${f.count>0?' ('+f.count+')':''}
+        </button>`).join('')}
+      </div>
+      <div style="overflow-x:auto">
+        <table class="deal-table">
+          <thead><tr>
+            <th>Dự án / Khách hàng</th><th>Loại</th><th>Giai đoạn</th>
+            <th>Ngày BĐ → KT</th><th>Nhắc Upsell</th><th>Hành động</th>
+          </tr></thead>
+          <tbody>
+            ${projects.length ? projects.map(p => {
+              const st = p.opsStage || 'onboarding';
+              const stageInfo = OPS_STAGES.find(s => s.id === st) || OPS_STAGES[0];
+              const lastLog = p.opsLog ? p.opsLog.split('\n').filter(Boolean).pop() : null;
+              const pkg = (p.package || '').toUpperCase();
+              let pType = p.industry || '—', pColor = 'var(--text3)';
+              if(pkg.includes('ZME')||pkg.includes('XSTREAM')){pType='Xstream';pColor='#8b5cf6';}
+              else if(pkg.includes('ZMKT')||(p.platform||'').toLowerCase().includes('tiktok')){pType='TikTok';pColor='#ec4899';}
+              else if(pkg.includes('ZHUB')){pType='Zhub';pColor='#f59e0b';}
+              else if(pkg.includes('MERCY')){pType='Mercy';pColor='#3b82f6';}
+              else if((p.platform||'').toLowerCase().includes('shopee')){pType='Shopee';pColor='#f97316';}
+              let uCell = '<span style="color:var(--text3);font-size:11px">—</span>';
+              if(p.opsEnd) {
+                const dL = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
+                if(dL < 0 && st !== 'completed') uCell = '<span style="color:var(--red);font-weight:700;font-size:11px">🔥 Quá hạn '+Math.abs(dL)+'d</span>';
+                else if(dL <= 15) uCell = '<span style="background:rgba(251,191,36,.15);color:var(--amber);font-weight:700;font-size:11px;padding:3px 8px;border-radius:12px;border:1px solid rgba(251,191,36,.3)">⚡ Còn '+dL+' ngày</span>';
+                else if(st === 'completed') uCell = '<span style="color:var(--green);font-size:11px">✅ Xong</span>';
+                else uCell = '<span style="color:var(--text3);font-size:11px">Còn '+dL+' ngày</span>';
+              }
+              const rowBg = p.opsEnd && Math.ceil((new Date(p.opsEnd)-new Date())/86400000)<0 && st!=='completed' ? 'background:rgba(248,113,113,.04)' : '';
+              return '<tr style="'+rowBg+'">'+
+                '<td><div style="font-weight:600">'+p.name+'</div>'+
+                '<div style="font-size:11px;color:var(--text3)">Sale: '+p.owner+(p.opsStaff?' · VH: '+p.opsStaff:'')+'</div>'+
+                (p.opsAccount?'<div style="font-size:10px;color:var(--blue)">🔗 '+p.opsAccount+'</div>':'')+
+                (lastLog?'<div style="font-size:10px;color:var(--text3);font-style:italic">'+lastLog.substring(0,55)+'…</div>':'')+
+                '</td>'+
+                '<td><span style="font-size:12px;font-weight:600;color:'+pColor+'">'+pType+'</span></td>'+
+                '<td><span class="badge" style="border:1px solid '+stageInfo.color+';color:'+stageInfo.color+';background:'+stageInfo.color+'18;white-space:nowrap">'+stageInfo.label+'</span></td>'+
+                '<td style="font-size:11px;white-space:nowrap">'+
+                  (p.opsStart?'<div>📅 '+p.opsStart+'</div>':'')+
+                  (p.opsEnd?'<div style="color:var(--amber)">🏁 '+p.opsEnd+'</div>':'<span style="color:var(--text3)">—</span>')+
+                '</td>'+
+                '<td>'+uCell+'</td>'+
+                '<td style="white-space:nowrap">'+
+                  '<button class="btn btn-sm btn-primary" onclick="openOpsModal('+p.id+')" style="font-size:11px">⚙️ Update</button>'+
+                  '<button class="btn btn-sm" onclick="editDeal('+p.id+')" style="font-size:11px;margin-top:4px">✏️ Sửa</button>'+
+                '</td>'+
+              '</tr>';
+            }).join('') : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text3)">'+
+              (stageFilter==='all'?'Chưa có dự án nào — bấm <strong>+ Thêm dự án</strong>':'Không có dự án ở giai đoạn này')+
+            '</td></tr>'}
+          </tbody>
+        </table>
       </div>
     </div>
   `;
 }
+
 // ================= MODULE 5: MASTER DATA (ALL CLIENTS) =================
 let allDataFilters = { period:'all', product:'all', owner:'all', stage:'all' };
 
