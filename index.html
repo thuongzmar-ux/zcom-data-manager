@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -280,8 +280,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   <div class="topbar">
     <div><div class="topbar-title" id="page-title">Dashboard</div><div class="topbar-sub" id="page-date"></div></div>
     <div class="topbar-right">
-      <button class="theme-toggle" onclick="toggleTheme()" title="Bật/Tắt Giao diện">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Bật/Tắt Giao diện">
+        <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
       </button>
       <div class="custom-select-wrapper">
         <select class="period-select" id="period-selector" onchange="setPeriod(this.value)">
@@ -629,15 +630,26 @@ let PERIODS = {
 });
 
 // ================= HELPERS & THEME =================
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const sun = document.getElementById('icon-sun');
+  const moon = document.getElementById('icon-moon');
+  if(sun) sun.style.display = theme === 'light' ? 'block' : 'none';
+  if(moon) moon.style.display = theme === 'light' ? 'none' : 'block';
+}
+
 function toggleTheme() {
-  const root = document.documentElement;
-  const current = root.getAttribute('data-theme');
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
   const next = current === 'light' ? 'dark' : 'light';
-  root.setAttribute('data-theme', next);
+  applyTheme(next);
   localStorage.setItem('zcom_theme', next);
 }
-const savedTheme = localStorage.getItem('zcom_theme');
-if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+// Restore theme on load
+(function() {
+  const saved = localStorage.getItem('zcom_theme') || 'dark';
+  applyTheme(saved);
+})();
 
 function fmtV(n) { return (n/1000000).toFixed(1) + 'tr'; }
 function fmt(n) { return new Intl.NumberFormat('vi-VN').format(n); }
