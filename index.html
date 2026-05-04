@@ -567,7 +567,97 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<!-- OPS UPDATE MODAL -->
+<div class="modal-overlay" id="ops-modal">
+  <div class="modal-box" style="width:680px;max-height:90vh;overflow-y:auto">
+    <div class="modal-hd">
+      <div>
+        <div class="modal-title" id="ops-modal-title">Cập nhật Vận hành</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px" id="ops-modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeOpsModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- STAGE SELECTOR -->
+      <div style="margin-bottom:20px">
+        <div class="form-divider" style="color:var(--blue)">⚙️ Giai đoạn Vận hành</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="ops-stage-btns"></div>
+      </div>
+
+      <!-- QUICK METRICS -->
+      <div class="form-row three" style="margin-bottom:20px">
+        <div>
+          <label>Ngày bắt đầu</label>
+          <input id="om-start" type="date">
+        </div>
+        <div>
+          <label>Ngày kết thúc HĐ</label>
+          <input id="om-end" type="date">
+        </div>
+        <div>
+          <label>Nhân sự vận hành</label>
+          <input id="om-staff" placeholder="Tên người phụ trách...">
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:20px">
+        <div>
+          <label>Link / ID Tài khoản Shop</label>
+          <input id="om-account" placeholder="TikTok: @shop_name / Shopee ID...">
+        </div>
+        <div>
+          <label>Supplier Cost (₫)</label>
+          <input id="om-supplier-cost" type="number" placeholder="Chi phí nhà cung cấp...">
+        </div>
+      </div>
+      <div class="form-row full" style="margin-bottom:20px">
+        <div>
+          <label>🔑 Thông tin Account & Truy cập</label>
+          <textarea id="om-access" placeholder="Tài khoản đăng nhập, link seller center..." style="min-height:60px"></textarea>
+        </div>
+      </div>
+
+      <!-- ADD LOG ENTRY -->
+      <div class="form-divider">📋 Thêm Log Vận hành</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <select id="om-log-type" style="padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none;min-width:130px">
+          <option value="✅">✅ Hoàn thành</option>
+          <option value="📢">📢 Báo cáo</option>
+          <option value="⚠️">⚠️ Vấn đề</option>
+          <option value="📞">📞 Liên hệ KH</option>
+          <option value="🔧">🔧 Kỹ thuật</option>
+          <option value="💰">💰 Tài chính</option>
+          <option value="📌">📌 Ghi chú</option>
+        </select>
+        <input id="om-log-entry" placeholder="Nội dung cập nhật hôm nay..." style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none">
+        <button class="btn btn-primary" onclick="addOpsLogEntry()" style="white-space:nowrap">+ Thêm Log</button>
+      </div>
+
+      <!-- LOG HISTORY -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.7" id="om-log-display">
+        <span style="color:var(--text3)">Chưa có log...</span>
+      </div>
+
+      <!-- NPS -->
+      <div class="form-row" style="margin-top:16px">
+        <div>
+          <label>NPS / Satisfaction Score (0–10)</label>
+          <input id="om-nps" type="number" min="0" max="10" placeholder="Điểm đánh giá của khách hàng...">
+        </div>
+        <div>
+          <label>Ghi chú nhanh</label>
+          <input id="om-note-quick" placeholder="Ghi chú thêm...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeOpsModal()">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveOpsUpdate()">💾 Lưu cập nhật</button>
+    </div>
+  </div>
+</div>
+
 <!-- TARGET MODAL -->
+
 <div class="modal-overlay" id="target-modal">
   <div class="modal-box" style="width:640px">
     <div class="modal-hd"><div class="modal-title">Chỉnh Target</div><button class="modal-close" onclick="closeTargetModal()">×</button></div>
@@ -1236,6 +1326,155 @@ function openTargetModal() {
   setTMPeriod(tmPeriod);
   document.getElementById('target-modal').classList.add('show');
 }
+// ================= OPS MODAL =================
+const OPS_STAGES = [
+  { id: 'onboarding', label: '🟡 Kickoff & Onboarding', color: '#f59e0b' },
+  { id: 'setup',      label: '🔵 Setup & Cài đặt',      color: '#3b82f6' },
+  { id: 'running',    label: '🟢 Running (Đang chạy)',   color: '#22c55e' },
+  { id: 'optimizing', label: '🟣 Optimizing (Tối ưu)',   color: '#a855f7' },
+  { id: 'qc',         label: '🔍 Review / QC',            color: '#64748b' },
+  { id: 'handover',   label: '⚪ Handover (Bàn giao)',    color: '#94a3b8' },
+  { id: 'completed',  label: '✅ Completed',               color: '#10b981' },
+  { id: 'paused',     label: '🔴 Tạm dừng',               color: '#ef4444' },
+];
+
+let _opsClientId = null;
+
+function openOpsModal(clientId) {
+  const c = clients.find(x => x.id == clientId);
+  if (!c) return;
+  _opsClientId = clientId;
+
+  document.getElementById('ops-modal-title').textContent = 'Vận hành: ' + c.name;
+  document.getElementById('ops-modal-sub').textContent = (c.package || '') + ' | Owner: ' + (c.owner || '');
+
+  // Stage buttons
+  const curStage = c.opsStage || 'onboarding';
+  document.getElementById('ops-stage-btns').innerHTML = OPS_STAGES.map(s => `
+    <button onclick="selectOpsStage('${s.id}')" id="ops-st-${s.id}"
+      style="padding:6px 12px;border-radius:20px;border:2px solid ${s.color};background:${curStage===s.id?s.color:'transparent'};color:${curStage===s.id?'#fff':s.color};font-size:12px;font-weight:500;cursor:pointer;transition:all .2s">
+      ${s.label}
+    </button>`).join('');
+
+  document.getElementById('om-start').value = c.opsStart || '';
+  document.getElementById('om-end').value = c.opsEnd || '';
+  document.getElementById('om-staff').value = c.opsStaff || '';
+  document.getElementById('om-account').value = c.opsAccount || '';
+  document.getElementById('om-access').value = c.opsAccess || '';
+  document.getElementById('om-supplier-cost').value = c.supplierCost || '';
+  document.getElementById('om-nps').value = c.nps || '';
+  document.getElementById('om-note-quick').value = '';
+  document.getElementById('om-log-entry').value = '';
+
+  renderOpsLog(c.opsLog || '');
+  document.getElementById('ops-modal').classList.add('show');
+}
+
+function selectOpsStage(stageId) {
+  OPS_STAGES.forEach(s => {
+    const btn = document.getElementById('ops-st-' + s.id);
+    if (!btn) return;
+    const active = s.id === stageId;
+    btn.style.background = active ? s.color : 'transparent';
+    btn.style.color = active ? '#fff' : s.color;
+  });
+}
+
+function getSelectedOpsStage() {
+  for (const s of OPS_STAGES) {
+    const btn = document.getElementById('ops-st-' + s.id);
+    if (btn && btn.style.background && btn.style.background !== 'transparent' && !btn.style.background.includes('rgba(0,0,0,0)')) {
+      // Check by color match
+      if (btn.style.color === 'rgb(255, 255, 255)' || btn.style.color === '#fff') return s.id;
+    }
+  }
+  return 'onboarding';
+}
+
+function addOpsLogEntry() {
+  const type = document.getElementById('om-log-type').value;
+  const entry = document.getElementById('om-log-entry').value.trim();
+  if (!entry) return;
+  const now = new Date();
+  const ts = `[${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}]`;
+  const newLine = `${ts} ${type} ${entry}`;
+  const logEl = document.getElementById('om-log-display');
+  const existing = logEl.dataset.raw || '';
+  const updated = newLine + (existing ? '\n' + existing : '');
+  logEl.dataset.raw = updated;
+  renderOpsLog(updated);
+  document.getElementById('om-log-entry').value = '';
+}
+
+function renderOpsLog(logText) {
+  const el = document.getElementById('om-log-display');
+  el.dataset.raw = logText;
+  if (!logText.trim()) {
+    el.innerHTML = '<span style="color:var(--text3)">Chưa có log nào...</span>';
+    return;
+  }
+  el.innerHTML = logText.split('\n').map(line => {
+    line = line.trim();
+    if (!line) return '';
+    let color = 'var(--text2)';
+    if (line.includes('✅')) color = 'var(--green)';
+    else if (line.includes('⚠️')) color = 'var(--red)';
+    else if (line.includes('💰')) color = 'var(--amber)';
+    else if (line.includes('📢')) color = 'var(--blue)';
+    else if (line.includes('📞')) color = 'var(--purple)';
+    return `<div style="color:${color};border-bottom:1px solid var(--border);padding:3px 0">${line}</div>`;
+  }).filter(Boolean).join('');
+}
+
+function saveOpsUpdate() {
+  const c = clients.find(x => x.id == _opsClientId);
+  if (!c) return;
+
+  // Get selected stage
+  let selectedStage = 'onboarding';
+  for (const s of OPS_STAGES) {
+    const btn = document.getElementById('ops-st-' + s.id);
+    if (btn && (btn.style.background === s.color || btn.style.background.includes('rgb'))) {
+      if (btn.style.color === 'rgb(255, 255, 255)') { selectedStage = s.id; break; }
+    }
+  }
+
+  const noteQuick = document.getElementById('om-note-quick').value.trim();
+  let opsLog = document.getElementById('om-log-display').dataset.raw || '';
+  if (noteQuick) {
+    const now = new Date();
+    const ts = `[${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}]`;
+    opsLog = `${ts} 📌 ${noteQuick}` + (opsLog ? '\n' + opsLog : '');
+  }
+
+  const updates = {
+    opsStage: selectedStage,
+    opsStart: document.getElementById('om-start').value,
+    opsEnd: document.getElementById('om-end').value,
+    opsStaff: document.getElementById('om-staff').value,
+    opsAccount: document.getElementById('om-account').value,
+    opsAccess: document.getElementById('om-access').value,
+    supplierCost: parseInt(document.getElementById('om-supplier-cost').value) || 0,
+    nps: parseFloat(document.getElementById('om-nps').value) || 0,
+    opsLog,
+  };
+
+  Object.assign(c, updates);
+  localStorage.setItem('zcom_clients', JSON.stringify(clients));
+  closeOpsModal();
+
+  // Re-render current page
+  if (currentPage === 'dashboard') renderDashboard();
+  if (currentPage === 'project-progress') renderProjectProgress();
+  if (currentPage === 'pipeline') renderPipeline();
+  if (currentPage === 'won') renderWon();
+}
+
+function closeOpsModal() {
+  document.getElementById('ops-modal').classList.remove('show');
+  _opsClientId = null;
+}
+
 function closeTargetModal() { document.getElementById('target-modal').classList.remove('show'); }
 function setTMPeriod(p) {
   tmPeriod = p;
@@ -2106,27 +2345,36 @@ function renderTienDo() {
             <thead><tr><th>Dự án / Khách hàng</th><th>Trạng thái VH</th><th>Deadline</th><th>Cảnh báo (Triggers)</th><th>Supplier Cost</th><th>Hành động</th></tr></thead>
             <tbody>
               ${projects.length ? projects.map(p => {
-                const stages = {
-                  'kickoff': { l: '1. Kickoff', c: 'badge-warm' },
-                  'production': { l: '2. Sản xuất', c: 'badge-proposal' },
-                  'qc': { l: '3. Review / QC', c: 'badge-neg' },
-                  'delivered': { l: '4. Bàn giao', c: 'badge-won' }
-                };
-                const st = stages[p.projectStage];
+                const st = p.opsStage || p.projectStage || 'onboarding';
+                const stageInfo = OPS_STAGES.find(s => s.id === st) || OPS_STAGES[0];
+                const lastLog = p.opsLog ? p.opsLog.split('\n').filter(Boolean)[0] : null;
                 const alerts = [];
-                if (p.isLate) alerts.push('<span style="color:var(--red);font-weight:500">🔥 Deadline hôm nay/Quá hạn</span>');
-                if (p.projectStage === 'delivered') alerts.push('<span style="color:var(--blue)">⏳ Đợi 90 ngày Upsell</span>');
+                if (p.isLate) alerts.push('<span style="color:var(--red);font-weight:500">🔥 Quá hạn</span>');
+                if (st === 'completed' || p.projectStage === 'delivered') alerts.push('<span style="color:var(--blue)">⏳ Đợi Upsell 90 ngày</span>');
+                if (st === 'paused') alerts.push('<span style="color:var(--red)">⏸ Đang tạm dừng</span>');
                 
                 return `
                 <tr>
-                  <td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">Owner: ${p.owner}</div></td>
-                  <td><span class="badge ${st.c}">${st.l}</span></td>
-                  <td style="font-size:12px;color:var(--text2)">${dayLabelP(p.deadlineDays||0)}</td>
-                  <td style="font-size:11px">${alerts.join('<br>') || '<span style="color:var(--text3)">Đang on-track</span>'}</td>
+                  <td>
+                    <div style="font-weight:500">${p.name}</div>
+                    <div style="font-size:11px;color:var(--text3)">Owner: ${p.owner}${p.opsStaff ? ' · VH: ' + p.opsStaff : ''}</div>
+                    ${p.opsAccount ? `<div style="font-size:10px;color:var(--blue);margin-top:2px">🔗 ${p.opsAccount}</div>` : ''}
+                  </td>
+                  <td>
+                    <span class="badge" style="border:1px solid ${stageInfo.color};color:${stageInfo.color};background:${stageInfo.color}18">${stageInfo.label}</span>
+                  </td>
+                  <td style="font-size:12px;color:var(--text2)">${p.opsEnd ? '📅 ' + p.opsEnd : dayLabelP(p.deadlineDays||0)}</td>
+                  <td style="font-size:11px;max-width:180px">
+                    ${alerts.join('<br>') || '<span style="color:var(--green)">✅ On-track</span>'}
+                    ${lastLog ? `<div style="color:var(--text3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${lastLog}">${lastLog}</div>` : ''}
+                  </td>
                   <td style="font-weight:500;color:var(--amber)">${fmtVp(p.supplierCost)}đ</td>
-                  <td><button class="btn btn-sm" onclick="alert('Cập nhật tiến độ dự án')">Update</button></td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" onclick="openOpsModal(${p.id})" style="font-size:11px">⚙️ Update</button>
+                    <button class="btn btn-sm" onclick="editDeal(${p.id})" style="font-size:11px;margin-top:4px">✏️ Sửa</button>
+                  </td>
                 </tr>
-              `}).join('') : `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Chưa có dự án nào đang chạy</td></tr>`}
+              `}).join('') : `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Chưa có dự án nào đang chạy. Hãy chốt deal (WON) để tạo dự án!</td></tr>`}
             </tbody>
           </table>
         </div>
