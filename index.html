@@ -2306,37 +2306,9 @@ function renderTienDo() {
   const el = document.getElementById('tien-do-content');
   if(!el) return;
   const activeClients = typeof getActiveClients !== 'undefined' ? getActiveClients() : clients;
-  
-  // Lấy các deal WON để làm dự án
   const won = activeClients.filter(d => d.stage === 'won');
-  
-  // Mock dữ liệu vận hành cho các deal WON (trong thực tế sẽ lấy từ DB)
-  const projects = won.map(d => {
-    // Random một số status cho demo
-    const statuses = ['kickoff', 'production', 'qc', 'delivered'];
-    const pStatus = d.id % 4 === 0 ? 'delivered' : statuses[d.id % 3]; 
-    const supplierCost = (d.price || 0) * (0.15 + (d.id % 10)/100); // Cost 15-25%
-    return {
-      ...d,
-      projectStage: pStatus,
-      daysToClose: 14 + (d.id % 10), // Deal velocity (ngày)
-      supplierCost: supplierCost,
-      realMargin: (d.price || 0) - supplierCost,
-      supplierScore: 8 + (d.id % 3), // Điểm 8-10
-      nps: pStatus === 'delivered' ? 4.5 + (d.id % 2)/2 : null, // NPS 4.5 - 5.0
-      isLate: pStatus !== 'delivered' && (d.deadlineDays || 0) <= 0
-    };
-  });
+  const projects = won.map(d => ({ ...d, isLate: (d.deadlineDays || 0) <= 0 && d.opsStage !== 'completed' }));
 
-  const delivered = projects.filter(p => p.projectStage === 'delivered');
-  
-  // Tính toán KPI Period
-  const avgVelocity = projects.length ? Math.round(projects.reduce((s, p) => s + p.daysToClose, 0) / projects.length) : 0;
-  const onTimeRate = delivered.length ? Math.round((delivered.filter(p => !p.isLate).length / delivered.length) * 100) : 100;
-  const avgSupScore = projects.length ? (projects.reduce((s, p) => s + p.supplierScore, 0) / projects.length).toFixed(1) : 0;
-  const avgNps = delivered.length ? (delivered.reduce((s, p) => s + p.nps, 0) / delivered.length).toFixed(1) : 0;
-
-  // Render HTML
   el.innerHTML = `
     <!-- BỘ CHỈ SỐ THEO DÕI THEO PERIOD -->
     <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px">KPI Vận Hành & Delivery</div>
@@ -2347,8 +2319,7 @@ function renderTienDo() {
       <div class="kpi-card"><div class="kpi-label">Satisfaction Score</div><div class="kpi-value" style="color:var(--purple)">${avgNps}/5.0</div><div class="kpi-sub">Đánh giá sau bàn giao</div></div>
     </div>
 
-    <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;margin-bottom:16px">
-      <!-- DANH SÁCH DỰ ÁN ĐANG CHẠY -->
+    <div style="margin-bottom:16px">
       <div class="p-panel" style="margin-bottom:0">
         <div class="p-panel-head" style="display:flex;justify-content:space-between;align-items:center">
           <div>
@@ -2362,68 +2333,60 @@ function renderTienDo() {
         </div>
         <div style="overflow-x:auto">
           <table class="deal-table">
-            <thead><tr><th>Dự án / Khách hàng</th><th>Trạng thái VH</th><th>Deadline</th><th>Cảnh báo (Triggers)</th><th>Supplier Cost</th><th>Hành động</th></tr></thead>
+            <thead><tr>
+              <th>Dự án / Khách hàng</th>
+              <th>Loại dự án</th>
+              <th>Giai đoạn VH</th>
+              <th>Deadline</th>
+              <th>Nhắc Upsell</th>
+              <th>Hành động</th>
+            </tr></thead>
             <tbody>
               ${projects.length ? projects.map(p => {
-                const st = p.opsStage || p.projectStage || 'onboarding';
+                const st = p.opsStage || 'onboarding';
                 const stageInfo = OPS_STAGES.find(s => s.id === st) || OPS_STAGES[0];
                 const lastLog = p.opsLog ? p.opsLog.split('\n').filter(Boolean)[0] : null;
-                const alerts = [];
-                if (p.isLate) alerts.push('<span style="color:var(--red);font-weight:500">🔥 Quá hạn</span>');
-                if (st === 'completed' || p.projectStage === 'delivered') alerts.push('<span style="color:var(--blue)">⏳ Đợi Upsell 90 ngày</span>');
-                if (st === 'paused') alerts.push('<span style="color:var(--red)">⏸ Đang tạm dừng</span>');
-                
+                const pkg = (p.package || '').toUpperCase();
+                let projectType = '—', typeColor = 'var(--text3)';
+                if (pkg.includes('ZME') || pkg.includes('XSTREAM')) { projectType = 'Xstream'; typeColor = '#8b5cf6'; }
+                else if (pkg.includes('ZMKT') || (p.platform||'').toLowerCase().includes('tiktok')) { projectType = 'TikTok'; typeColor = '#ec4899'; }
+                else if (pkg.includes('ZHUB')) { projectType = 'Zhub'; typeColor = '#f59e0b'; }
+                else if (pkg.includes('MERCY')) { projectType = 'Mercy'; typeColor = '#3b82f6'; }
+                else if ((p.platform||'').toLowerCase().includes('shopee')) { projectType = 'Shopee'; typeColor = '#f97316'; }
+                else if (p.industry) { projectType = p.industry; }
+
+                let upsellCell = '<span style="color:var(--text3);font-size:11px">—</span>';
+                if (p.opsEnd) {
+                  const daysLeft = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
+                  if (daysLeft <= 0) {
+                    upsellCell = '<span style="color:var(--red);font-weight:600;font-size:11px">🔥 Đã hết hạn!</span>';
+                  } else if (daysLeft <= 15) {
+                    upsellCell = `<span style="color:var(--amber);font-weight:600;font-size:11px">⚡ Còn ${daysLeft} ngày — Nhắc Upsell!</span>`;
+                  } else {
+                    upsellCell = `<span style="color:var(--text3);font-size:11px">Còn ${daysLeft} ngày</span>`;
+                  }
+                }
+
                 return `
                 <tr>
                   <td>
                     <div style="font-weight:500">${p.name}</div>
-                    <div style="font-size:11px;color:var(--text3)">Owner: ${p.owner}${p.opsStaff ? ' · VH: ' + p.opsStaff : ''}</div>
-                    ${p.opsAccount ? `<div style="font-size:10px;color:var(--blue);margin-top:2px">🔗 ${p.opsAccount}</div>` : ''}
+                    <div style="font-size:11px;color:var(--text3)">Owner: ${p.owner}${p.opsStaff ? ' · VH: '+p.opsStaff : ''}</div>
+                    ${p.opsAccount ? '<div style="font-size:10px;color:var(--blue);margin-top:2px">🔗 '+p.opsAccount+'</div>' : ''}
+                    ${lastLog ? '<div style="font-size:10px;color:var(--text3);margin-top:2px;font-style:italic">'+lastLog.substring(0,60)+'</div>' : ''}
                   </td>
-                  <td>
-                    <span class="badge" style="border:1px solid ${stageInfo.color};color:${stageInfo.color};background:${stageInfo.color}18">${stageInfo.label}</span>
-                  </td>
-                  <td style="font-size:12px;color:var(--text2)">${p.opsEnd ? '📅 ' + p.opsEnd : dayLabelP(p.deadlineDays||0)}</td>
-                  <td style="font-size:11px;max-width:180px">
-                    ${alerts.join('<br>') || '<span style="color:var(--green)">✅ On-track</span>'}
-                    ${lastLog ? `<div style="color:var(--text3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${lastLog}">${lastLog}</div>` : ''}
-                  </td>
-                  <td style="font-weight:500;color:var(--amber)">${fmtVp(p.supplierCost)}đ</td>
-                  <td>
+                  <td><span style="font-size:12px;font-weight:600;color:${typeColor}">${projectType}</span></td>
+                  <td><span class="badge" style="border:1px solid ${stageInfo.color};color:${stageInfo.color};background:${stageInfo.color}18;white-space:nowrap">${stageInfo.label}</span></td>
+                  <td style="font-size:12px;color:var(--text2);white-space:nowrap">${p.opsEnd ? '📅 '+p.opsEnd : (p.deadlineDays != null ? dayLabelP(p.deadlineDays) : '—')}</td>
+                  <td>${upsellCell}</td>
+                  <td style="white-space:nowrap">
                     <button class="btn btn-sm btn-primary" onclick="openOpsModal(${p.id})" style="font-size:11px">⚙️ Update</button>
                     <button class="btn btn-sm" onclick="editDeal(${p.id})" style="font-size:11px;margin-top:4px">✏️ Sửa</button>
                   </td>
-                </tr>
-              `}).join('') : `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Chưa có dự án nào đang chạy. Hãy chốt deal (WON) để tạo dự án!</td></tr>`}
+                </tr>`;
+              }).join('') : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">Chưa có dự án nào. Bấm <strong>+ Thêm khách hàng</strong> để bắt đầu!</td></tr>'}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      <!-- TỔNG KẾT MARGIN -->
-      <div class="p-panel" style="margin-bottom:0">
-        <div class="p-panel-head"><div class="p-panel-title">Margin Thực Tế</div></div>
-        <div class="p-panel-body" style="display:flex;flex-direction:column;gap:14px">
-          <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Tổng Revenue (Booked)</div>
-            <div style="font-weight:600;font-size:15px;color:var(--green)">${fmtVp(projects.reduce((s,p)=>s+p.price,0))}đ</div>
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Chi phí Supplier / Phụ trợ</div>
-            <div style="font-weight:600;font-size:15px;color:var(--amber)">- ${fmtVp(projects.reduce((s,p)=>s+p.supplierCost,0))}đ</div>
-          </div>
-          <div style="border-top:1px solid var(--border);padding-top:14px">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">Lợi nhuận gộp (Real Margin)</div>
-            <div style="font-weight:600;font-size:18px;color:var(--purple)">${fmtVp(projects.reduce((s,p)=>s+p.realMargin,0))}đ</div>
-          </div>
-          
-          <div style="margin-top:8px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);padding:10px;border-radius:6px">
-             <div style="font-size:11px;font-weight:600;color:var(--blue);margin-bottom:4px">Trigger Đã Kích Hoạt</div>
-             <ul style="font-size:11px;color:var(--text2);margin-left:14px;line-height:1.6">
-               <li>Quá hạn: <strong>${projects.filter(p=>p.isLate).length}</strong> dự án</li>
-               <li>Upsell chờ (90 ngày): <strong>${delivered.length}</strong> dự án</li>
-             </ul>
-          </div>
         </div>
       </div>
     </div>
