@@ -177,7 +177,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">ZC</div>
-    <div><div class="logo-text">ZCOM Data Manager</div><div class="logo-sub">Sales & Pipeline — Module 1</div></div>
+    <div><div class="logo-text">ZCOM Data Manager</div></div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Tổng quan</div>
@@ -536,6 +536,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
           <select id="f-contract"><option value="">Chưa có</option><option value="SIGNED">Đã ký</option><option value="SCANNED">Đã scan/có file</option></select></div>
         <div><label>Ngày ký HĐ</label><input id="f-contract-date" type="date"></div>
       </div>
+      <div class="form-divider" style="color:var(--blue)">⚙️ Vận hành & Theo dõi Dự án</div>
+      <div class="form-row three">
+        <div><label>Ngày bắt đầu</label><input id="f-ops-start" type="date"></div>
+        <div><label>Ngày kết thúc</label><input id="f-ops-end" type="date"></div>
+        <div><label>Giai đoạn vận hành</label>
+          <select id="f-ops-stage">
+            <option value="">-- Chưa bắt đầu --</option>
+            <option value="onboarding">🟡 Onboarding (Tiếp nhận)</option>
+            <option value="setup">🔵 Setup (Thiết lập)</option>
+            <option value="running">🟢 Running (Đang chạy)</option>
+            <option value="optimizing">🟣 Optimizing (Tối ưu)</option>
+            <option value="handover">⚪ Handover (Bàn giao)</option>
+            <option value="completed">✅ Completed (Hoàn thành)</option>
+            <option value="paused">🔴 Paused (Tạm dừng)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div><label>Link / ID Tài khoản Shop</label><input id="f-ops-account" placeholder="TikTok: @shop_name / Shopee: seller ID..."></div>
+        <div><label>Nhân sự vận hành</label><input id="f-ops-staff" placeholder="Tên người phụ trách vận hành..."></div>
+      </div>
+      <div class="form-row full"><div><label>Thông tin Account & Truy cập</label><textarea id="f-ops-access" placeholder="Tài khoản đăng nhập, password (mã hoá), link seller center, link livestream account..." style="min-height:60px"></textarea></div></div>
+      <div class="form-row full"><div><label>📋 Nhật ký Vận hành (Log)</label><textarea id="f-ops-log" placeholder="[04/05] Đã setup xong auto-message&#10;[05/05] Live đạt 2tr GMV&#10;..." style="min-height:80px;font-family:monospace;font-size:12px"></textarea></div></div>
     </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeDealModal()">Huỷ</button>
@@ -1036,6 +1059,13 @@ function openDealModal() {
   document.getElementById('f-paid').value = '';
   document.getElementById('f-contract').value = '';
   document.getElementById('f-contract-date').value = '';
+  document.getElementById('f-ops-start').value = '';
+  document.getElementById('f-ops-end').value = '';
+  document.getElementById('f-ops-stage').value = '';
+  document.getElementById('f-ops-account').value = '';
+  document.getElementById('f-ops-staff').value = '';
+  document.getElementById('f-ops-access').value = '';
+  document.getElementById('f-ops-log').value = '';
   document.getElementById('deal-modal-title').textContent = 'Thêm khách hàng mới';
   calcComm();
   document.getElementById('deal-modal').classList.add('show');
@@ -1071,6 +1101,14 @@ function editDeal(id) {
   document.getElementById('f-paid').value = d.amountPaid || '';
   document.getElementById('f-contract').value = d.contractStatus || '';
   if(d.contractDate) document.getElementById('f-contract-date').value = d.contractDate.split('T')[0];
+  // Ops fields
+  document.getElementById('f-ops-start').value = d.opsStart || '';
+  document.getElementById('f-ops-end').value = d.opsEnd || '';
+  document.getElementById('f-ops-stage').value = d.opsStage || '';
+  document.getElementById('f-ops-account').value = d.opsAccount || '';
+  document.getElementById('f-ops-staff').value = d.opsStaff || '';
+  document.getElementById('f-ops-access').value = d.opsAccess || '';
+  document.getElementById('f-ops-log').value = d.opsLog || '';
   calcComm();
   document.getElementById('deal-modal-title').textContent = 'Chỉnh sửa khách hàng';
   document.getElementById('deal-modal').classList.add('show');
@@ -1116,6 +1154,13 @@ function saveDeal() {
     amountPaid: parseInt(document.getElementById('f-paid').value) || 0,
     contractStatus: document.getElementById('f-contract').value,
     contractDate: document.getElementById('f-contract-date').value,
+    opsStart: document.getElementById('f-ops-start').value,
+    opsEnd: document.getElementById('f-ops-end').value,
+    opsStage: document.getElementById('f-ops-stage').value,
+    opsAccount: document.getElementById('f-ops-account').value,
+    opsStaff: document.getElementById('f-ops-staff').value,
+    opsAccess: document.getElementById('f-ops-access').value,
+    opsLog: document.getElementById('f-ops-log').value,
     deadlineDays: 7
   };
 
