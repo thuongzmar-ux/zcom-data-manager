@@ -2353,6 +2353,16 @@ function renderTienDo() {
     return (p.opsStage || 'onboarding') === stageFilter;
   });
 
+  // ── Pagination ──
+  const PAGE_SIZE = 10;
+  const totalPages = Math.max(1, Math.ceil(projects.length / PAGE_SIZE));
+  if(!window._tdPage || window._tdPage < 1) window._tdPage = 1;
+  if(window._tdPage > totalPages) window._tdPage = totalPages;
+  const curPage = window._tdPage;
+  const paged = projects.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
+  const fromIdx = projects.length ? (curPage - 1) * PAGE_SIZE + 1 : 0;
+  const toIdx   = Math.min(curPage * PAGE_SIZE, projects.length);
+
   const filterBtns = [
     { id:'all', label:'Tất cả', count: won.length },
     { id:'onboarding', label:'🟡 Onboarding', count: won.filter(p=>(p.opsStage||'onboarding')==='onboarding').length },
@@ -2362,6 +2372,61 @@ function renderTienDo() {
     { id:'completed', label:'✅ Hoàn thành', count: won.filter(p=>p.opsStage==='completed').length },
     { id:'upsell', label:'⚡ Nhắc Upsell', count: upsellNow },
   ];
+
+  // Build page number buttons (max 5 visible)
+  const pageNums = [];
+  let startP = Math.max(1, curPage - 2);
+  let endP = Math.min(totalPages, startP + 4);
+  if(endP - startP < 4) startP = Math.max(1, endP - 4);
+  for(let i = startP; i <= endP; i++) pageNums.push(i);
+
+  const pageBtnStyle = (active) =>
+    `font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid ${active?'var(--purple)':'var(--border)'};background:${active?'var(--purple)':'var(--bg3)'};color:${active?'#fff':'var(--text2)'};cursor:pointer;font-weight:${active?600:400};min-width:34px`;
+
+  const rowHtml = paged.length ? paged.map(p => {
+    const st = p.opsStage || 'onboarding';
+    const stageInfo = OPS_STAGES.find(s => s.id === st) || OPS_STAGES[0];
+    const lastLog = p.opsLog ? p.opsLog.split('\n').filter(Boolean).pop() : null;
+    const pkg = (p.package || '').toUpperCase();
+    const TYPE_COLORS = {Xstream:'#8b5cf6',TikTok:'#ec4899',Zhub:'#f59e0b',Mercy:'#3b82f6',Shopee:'#f97316',Facebook:'#3b82f6',Khác:'var(--text3)'};
+    let pType = '—', pColor = 'var(--text3)';
+    if(p.opsType) { pType = p.opsType; pColor = TYPE_COLORS[p.opsType] || 'var(--text3)'; }
+    else if(pkg.includes('ZME')||pkg.includes('XSTREAM')){pType='Xstream';pColor='#8b5cf6';}
+    else if(pkg.includes('ZMKT')||(p.platform||'').toLowerCase().includes('tiktok')){pType='TikTok';pColor='#ec4899';}
+    else if(pkg.includes('ZHUB')){pType='Zhub';pColor='#f59e0b';}
+    else if(pkg.includes('MERCY')){pType='Mercy';pColor='#3b82f6';}
+    else if((p.platform||'').toLowerCase().includes('shopee')){pType='Shopee';pColor='#f97316';}
+    else if(p.industry){pType=p.industry;}
+    let uCell = '<span style="color:var(--text3);font-size:11px">—</span>';
+    if(p.opsEnd) {
+      const dL = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
+      if(dL < 0 && st !== 'completed') uCell = '<span style="color:var(--red);font-weight:700;font-size:11px">🔥 Quá hạn '+Math.abs(dL)+'d</span>';
+      else if(dL <= 15) uCell = '<span style="background:rgba(251,191,36,.15);color:var(--amber);font-weight:700;font-size:11px;padding:3px 8px;border-radius:12px;border:1px solid rgba(251,191,36,.3)">⚡ Còn '+dL+' ngày</span>';
+      else if(st === 'completed') uCell = '<span style="color:var(--green);font-size:11px">✅ Xong</span>';
+      else uCell = '<span style="color:var(--text3);font-size:11px">Còn '+dL+' ngày</span>';
+    }
+    const rowBg = p.opsEnd && Math.ceil((new Date(p.opsEnd)-new Date())/86400000)<0 && st!=='completed' ? 'background:rgba(248,113,113,.04)' : '';
+    return '<tr style="'+rowBg+'">'+
+      '<td><div style="font-weight:600">'+p.name+'</div>'+
+      '<div style="font-size:11px;color:var(--text3)">Sale: '+p.owner+(p.opsStaff?' · VH: '+p.opsStaff:'')+'</div>'+
+      (p.opsAccount?'<div style="font-size:10px;color:var(--blue)">🔗 '+p.opsAccount+'</div>':'')+
+      (lastLog?'<div style="font-size:10px;color:var(--text3);font-style:italic">'+lastLog.substring(0,55)+'…</div>':'')+
+      '</td>'+
+      '<td><span style="font-size:12px;font-weight:600;color:'+pColor+'">'+pType+'</span></td>'+
+      '<td><span class="badge" style="border:1px solid '+stageInfo.color+';color:'+stageInfo.color+';background:'+stageInfo.color+'18;white-space:nowrap">'+stageInfo.label+'</span></td>'+
+      '<td style="font-size:11px;white-space:nowrap">'+
+        (p.opsStart?'<div>📅 '+p.opsStart+'</div>':'')+
+        (p.opsEnd?'<div style="color:var(--amber)">🏁 '+p.opsEnd+'</div>':'<span style="color:var(--text3)">—</span>')+
+      '</td>'+
+      '<td>'+uCell+'</td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="btn btn-sm btn-primary" onclick="openOpsModal('+p.id+')" style="font-size:11px">⚙️ Update</button>'+
+        '<button class="btn btn-sm" onclick="editDeal('+p.id+')" style="font-size:11px;margin-top:4px">✏️ Sửa</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text3)">'+
+    (stageFilter==='all'?'Chưa có dự án nào — bấm <strong>+ Thêm dự án</strong>':'Không có dự án ở giai đoạn này')+
+  '</td></tr>';
 
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px">
@@ -2379,7 +2444,7 @@ function renderTienDo() {
         </button>
       </div>
       <div style="padding:0 16px 12px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
-        ${filterBtns.map(f=>`<button onclick="window._tdFilter='${f.id}';renderTienDo()"
+        ${filterBtns.map(f=>`<button onclick="window._tdFilter='${f.id}';window._tdPage=1;renderTienDo()"
           style="font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid ${stageFilter===f.id?'var(--purple)':'var(--border)'};background:${stageFilter===f.id?'rgba(139,92,246,.15)':'var(--bg3)'};color:${stageFilter===f.id?'var(--purple)':'var(--text2)'};cursor:pointer;font-weight:${stageFilter===f.id?600:400}">
           ${f.label}${f.count>0?' ('+f.count+')':''}
         </button>`).join('')}
@@ -2390,54 +2455,20 @@ function renderTienDo() {
             <th>Dự án / Khách hàng</th><th>Loại</th><th>Giai đoạn</th>
             <th>Ngày BĐ → KT</th><th>Nhắc Upsell</th><th>Hành động</th>
           </tr></thead>
-          <tbody>
-            ${projects.length ? projects.map(p => {
-              const st = p.opsStage || 'onboarding';
-              const stageInfo = OPS_STAGES.find(s => s.id === st) || OPS_STAGES[0];
-              const lastLog = p.opsLog ? p.opsLog.split('\n').filter(Boolean).pop() : null;
-              const pkg = (p.package || '').toUpperCase();
-              const TYPE_COLORS = {Xstream:'#8b5cf6',TikTok:'#ec4899',Zhub:'#f59e0b',Mercy:'#3b82f6',Shopee:'#f97316',Facebook:'#3b82f6',Khác:'var(--text3)'};
-              let pType = '—', pColor = 'var(--text3)';
-              if(p.opsType) { pType = p.opsType; pColor = TYPE_COLORS[p.opsType] || 'var(--text3)'; }
-              else if(pkg.includes('ZME')||pkg.includes('XSTREAM')){pType='Xstream';pColor='#8b5cf6';}
-              else if(pkg.includes('ZMKT')||(p.platform||'').toLowerCase().includes('tiktok')){pType='TikTok';pColor='#ec4899';}
-              else if(pkg.includes('ZHUB')){pType='Zhub';pColor='#f59e0b';}
-              else if(pkg.includes('MERCY')){pType='Mercy';pColor='#3b82f6';}
-              else if((p.platform||'').toLowerCase().includes('shopee')){pType='Shopee';pColor='#f97316';}
-              else if(p.industry){pType=p.industry;}
-              let uCell = '<span style="color:var(--text3);font-size:11px">—</span>';
-              if(p.opsEnd) {
-                const dL = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
-                if(dL < 0 && st !== 'completed') uCell = '<span style="color:var(--red);font-weight:700;font-size:11px">🔥 Quá hạn '+Math.abs(dL)+'d</span>';
-                else if(dL <= 15) uCell = '<span style="background:rgba(251,191,36,.15);color:var(--amber);font-weight:700;font-size:11px;padding:3px 8px;border-radius:12px;border:1px solid rgba(251,191,36,.3)">⚡ Còn '+dL+' ngày</span>';
-                else if(st === 'completed') uCell = '<span style="color:var(--green);font-size:11px">✅ Xong</span>';
-                else uCell = '<span style="color:var(--text3);font-size:11px">Còn '+dL+' ngày</span>';
-              }
-              const rowBg = p.opsEnd && Math.ceil((new Date(p.opsEnd)-new Date())/86400000)<0 && st!=='completed' ? 'background:rgba(248,113,113,.04)' : '';
-              return '<tr style="'+rowBg+'">'+
-                '<td><div style="font-weight:600">'+p.name+'</div>'+
-                '<div style="font-size:11px;color:var(--text3)">Sale: '+p.owner+(p.opsStaff?' · VH: '+p.opsStaff:'')+'</div>'+
-                (p.opsAccount?'<div style="font-size:10px;color:var(--blue)">🔗 '+p.opsAccount+'</div>':'')+
-                (lastLog?'<div style="font-size:10px;color:var(--text3);font-style:italic">'+lastLog.substring(0,55)+'…</div>':'')+
-                '</td>'+
-                '<td><span style="font-size:12px;font-weight:600;color:'+pColor+'">'+pType+'</span></td>'+
-                '<td><span class="badge" style="border:1px solid '+stageInfo.color+';color:'+stageInfo.color+';background:'+stageInfo.color+'18;white-space:nowrap">'+stageInfo.label+'</span></td>'+
-                '<td style="font-size:11px;white-space:nowrap">'+
-                  (p.opsStart?'<div>📅 '+p.opsStart+'</div>':'')+
-                  (p.opsEnd?'<div style="color:var(--amber)">🏁 '+p.opsEnd+'</div>':'<span style="color:var(--text3)">—</span>')+
-                '</td>'+
-                '<td>'+uCell+'</td>'+
-                '<td style="white-space:nowrap">'+
-                  '<button class="btn btn-sm btn-primary" onclick="openOpsModal('+p.id+')" style="font-size:11px">⚙️ Update</button>'+
-                  '<button class="btn btn-sm" onclick="editDeal('+p.id+')" style="font-size:11px;margin-top:4px">✏️ Sửa</button>'+
-                '</td>'+
-              '</tr>';
-            }).join('') : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text3)">'+
-              (stageFilter==='all'?'Chưa có dự án nào — bấm <strong>+ Thêm dự án</strong>':'Không có dự án ở giai đoạn này')+
-            '</td></tr>'}
-          </tbody>
+          <tbody>${rowHtml}</tbody>
         </table>
       </div>
+      ${totalPages > 1 || projects.length > 0 ? `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text3)">
+          Hiển thị <strong style="color:var(--text)">${fromIdx}–${toIdx}</strong> / <strong style="color:var(--text)">${projects.length}</strong> dự án
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button onclick="window._tdPage=${curPage-1};renderTienDo()" ${curPage<=1?'disabled':''} style="${pageBtnStyle(false)};${curPage<=1?'opacity:.4;cursor:not-allowed':''}">‹ Trước</button>
+          ${pageNums.map(n=>`<button onclick="window._tdPage=${n};renderTienDo()" style="${pageBtnStyle(n===curPage)}">${n}</button>`).join('')}
+          <button onclick="window._tdPage=${curPage+1};renderTienDo()" ${curPage>=totalPages?'disabled':''} style="${pageBtnStyle(false)};${curPage>=totalPages?'opacity:.4;cursor:not-allowed':''}">Sau ›</button>
+        </div>
+      </div>` : ''}
     </div>
   `;
 }
