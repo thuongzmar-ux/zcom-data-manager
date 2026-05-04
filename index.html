@@ -554,8 +554,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
         </div>
       </div>
       <div class="form-row">
-        <div><label>Link / ID Tài khoản Shop</label><input id="f-ops-account" placeholder="TikTok: @shop_name / Shopee: seller ID..."></div>
+        <div><label>Loại dự án</label>
+          <select id="f-ops-type">
+            <option value="">-- Chọn loại --</option>
+            <option value="Xstream">🟣 Xstream (AI Livestream)</option>
+            <option value="TikTok">🩷 TikTok Growth</option>
+            <option value="Zhub">🟡 Zhub</option>
+            <option value="Mercy">🔵 Mercy</option>
+            <option value="Shopee">🟠 Shopee</option>
+            <option value="Facebook">🔵 Facebook Ads</option>
+            <option value="Khác">⚪ Khác</option>
+          </select>
+        </div>
         <div><label>Nhân sự vận hành</label><input id="f-ops-staff" placeholder="Tên người phụ trách vận hành..."></div>
+      </div>
+      <div class="form-row">
+        <div><label>Link / ID Tài khoản Shop</label><input id="f-ops-account" placeholder="TikTok: @shop_name / Shopee: seller ID..."></div>
       </div>
       <div class="form-row full"><div><label>Thông tin Account & Truy cập</label><textarea id="f-ops-access" placeholder="Tài khoản đăng nhập, password (mã hoá), link seller center, link livestream account..." style="min-height:60px"></textarea></div></div>
       <div class="form-row full"><div><label>📋 Nhật ký Vận hành (Log)</label><textarea id="f-ops-log" placeholder="[04/05] Đã setup xong auto-message&#10;[05/05] Live đạt 2tr GMV&#10;..." style="min-height:80px;font-family:monospace;font-size:12px"></textarea></div></div>
@@ -1191,6 +1205,7 @@ function openDealModal() {
   document.getElementById('f-ops-staff').value = '';
   document.getElementById('f-ops-access').value = '';
   document.getElementById('f-ops-log').value = '';
+  document.getElementById('f-ops-type').value = '';
   document.getElementById('deal-modal-title').textContent = 'Thêm khách hàng mới';
   calcComm();
   document.getElementById('deal-modal').classList.add('show');
@@ -1234,6 +1249,7 @@ function editDeal(id) {
   document.getElementById('f-ops-staff').value = d.opsStaff || '';
   document.getElementById('f-ops-access').value = d.opsAccess || '';
   document.getElementById('f-ops-log').value = d.opsLog || '';
+  document.getElementById('f-ops-type').value = d.opsType || '';
   calcComm();
   document.getElementById('deal-modal-title').textContent = 'Chỉnh sửa khách hàng';
   document.getElementById('deal-modal').classList.add('show');
@@ -1286,6 +1302,7 @@ function saveDeal() {
     opsStaff: document.getElementById('f-ops-staff').value,
     opsAccess: document.getElementById('f-ops-access').value,
     opsLog: document.getElementById('f-ops-log').value,
+    opsType: document.getElementById('f-ops-type').value,
     deadlineDays: 7
   };
 
@@ -2375,12 +2392,15 @@ function renderTienDo() {
               const stageInfo = OPS_STAGES.find(s => s.id === st) || OPS_STAGES[0];
               const lastLog = p.opsLog ? p.opsLog.split('\n').filter(Boolean).pop() : null;
               const pkg = (p.package || '').toUpperCase();
-              let pType = p.industry || '—', pColor = 'var(--text3)';
-              if(pkg.includes('ZME')||pkg.includes('XSTREAM')){pType='Xstream';pColor='#8b5cf6';}
+              const TYPE_COLORS = {Xstream:'#8b5cf6',TikTok:'#ec4899',Zhub:'#f59e0b',Mercy:'#3b82f6',Shopee:'#f97316',Facebook:'#3b82f6',Khác:'var(--text3)'};
+              let pType = '—', pColor = 'var(--text3)';
+              if(p.opsType) { pType = p.opsType; pColor = TYPE_COLORS[p.opsType] || 'var(--text3)'; }
+              else if(pkg.includes('ZME')||pkg.includes('XSTREAM')){pType='Xstream';pColor='#8b5cf6';}
               else if(pkg.includes('ZMKT')||(p.platform||'').toLowerCase().includes('tiktok')){pType='TikTok';pColor='#ec4899';}
               else if(pkg.includes('ZHUB')){pType='Zhub';pColor='#f59e0b';}
               else if(pkg.includes('MERCY')){pType='Mercy';pColor='#3b82f6';}
               else if((p.platform||'').toLowerCase().includes('shopee')){pType='Shopee';pColor='#f97316';}
+              else if(p.industry){pType=p.industry;}
               let uCell = '<span style="color:var(--text3);font-size:11px">—</span>';
               if(p.opsEnd) {
                 const dL = Math.ceil((new Date(p.opsEnd) - new Date()) / 86400000);
