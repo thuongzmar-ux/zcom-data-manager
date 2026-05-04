@@ -1475,6 +1475,20 @@ function closeOpsModal() {
   _opsClientId = null;
 }
 
+// Open deal modal pre-filled for ops context (stage = won, opsStage = onboarding)
+function openDealModalFromOps() {
+  openDealModal();
+  // Pre-set stage to WON so it shows in project progress table immediately
+  setTimeout(() => {
+    const stageEl = document.getElementById('f-stage');
+    if (stageEl) stageEl.value = 'won';
+    const opsStEl = document.getElementById('f-ops-stage');
+    if (opsStEl) opsStEl.value = 'onboarding';
+    document.getElementById('deal-modal-title').textContent = 'Thêm Dự án Vận hành';
+  }, 0);
+}
+
+
 function closeTargetModal() { document.getElementById('target-modal').classList.remove('show'); }
 function setTMPeriod(p) {
   tmPeriod = p;
@@ -2336,9 +2350,15 @@ function renderTienDo() {
     <div style="display:grid;grid-template-columns:3fr 1fr;gap:16px;margin-bottom:16px">
       <!-- DANH SÁCH DỰ ÁN ĐANG CHẠY -->
       <div class="p-panel" style="margin-bottom:0">
-        <div class="p-panel-head">
-          <div class="p-panel-title">Bảng Theo Dõi Tiến Độ (Active Projects)</div>
-          <div style="font-size:11px;color:var(--text3)">Liên kết từ Deals đã WON</div>
+        <div class="p-panel-head" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="p-panel-title">Bảng Theo Dõi Tiến Độ (Active Projects)</div>
+            <div style="font-size:11px;color:var(--text3)">Tất cả khách đang vận hành</div>
+          </div>
+          <button class="btn btn-primary" onclick="openDealModalFromOps()" style="white-space:nowrap;gap:6px;display:flex;align-items:center">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+            Thêm khách hàng
+          </button>
         </div>
         <div style="overflow-x:auto">
           <table class="deal-table">
