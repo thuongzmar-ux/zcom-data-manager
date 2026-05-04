@@ -736,7 +736,7 @@ let defaultClients = [
 
 let clients = JSON.parse(localStorage.getItem('zcom_clients')) || defaultClients;
 let currentPeriod = localStorage.getItem('zcom_period') || 'M5';
-let currentPage = 'dashboard';
+let currentPage = (location.hash ? location.hash.slice(1) : null) || localStorage.getItem('zcom_page') || 'dashboard';
 let dealView = 'list';
 let selectedOwner = 'all';
 
@@ -813,6 +813,9 @@ function navigate(page) {
   const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
   if(navEl) navEl.classList.add('active');
   currentPage = page;
+  // Lưu vào hash và localStorage để F5 không bị mất
+  location.hash = page;
+  localStorage.setItem('zcom_page', page);
 
   const titles = {
     'dashboard':'Dashboard','all-data':'Tất cả Dữ liệu (Master)','pipeline':'Pipeline','hot-leads':'HOT Leads',
@@ -1573,7 +1576,7 @@ function renderHistory() {
 const now = new Date();
 document.getElementById('page-date').textContent = 'Th ' + (now.getDay()||7) + ', ' + String(now.getDate()).padStart(2,'0') + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear();
 setPeriod(currentPeriod.replace('P','')); // triggers render
-navigate('dashboard');
+navigate(currentPage); // Restore page từ hash/localStorage
 
 
 
@@ -1586,7 +1589,8 @@ navigate('dashboard');
 document.addEventListener('DOMContentLoaded', function() {
   patchNavigate();
   patchPages();
-  if (typeof renderDashboard === 'function') renderDashboard();
+  // Restore đúng page sau khi DOMContentLoaded
+  navigate(currentPage);
   if (typeof updateBadges === 'function') updateBadges();
 });
 
