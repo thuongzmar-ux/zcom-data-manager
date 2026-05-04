@@ -782,20 +782,46 @@ function renderDashboard() {
   const target = PERIODS[currentPeriod].target;
   const gap = target - revenue;
 
-  document.getElementById('dash-metrics').innerHTML = [
-    { l:'Tổng khách', v: act.length, s:'đang quản lý', c:'' },
-    { l:'HOT', v: hot, s:'cần xử lý ngay', c: hot>0?'red':'' },
-    { l:'WARM', v: warm, s:'đang follow', c:'' },
-    { l:'Đã chốt (WON)', v: wonDeals.length, s:'deals ký được', c:'green' },
-    { l:'Revenue', v: fmtV(revenue)+'đ', s:'đã ký hợp đồng', c:'green' },
-    { l:'GAP', v: (gap>0?'-':'')+fmtV(Math.abs(gap))+'đ', s: gap>0?'còn lại phải bán':'Vượt mục tiêu!', c:gap>0?'red':'green' },
-  ].map(m => `<div class="metric-card"><div class="metric-label">${m.l}</div><div class="metric-value ${m.c}">${m.v}</div><div class="metric-sub">${m.s}</div></div>`).join('');
+  document.getElementById('dash-metrics').innerHTML = `
+    <div style="background:linear-gradient(135deg, rgba(139, 92, 246, 0.1), var(--bg2)); border:1px solid rgba(139, 92, 246, 0.2); border-radius:12px; padding:24px; margin-bottom:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05)">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:16px">
+        <div>
+          <div style="font-size:13px; color:var(--text3); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px">Doanh thu ${currentPeriod}</div>
+          <div style="font-size:36px; font-weight:700; color:var(--text); line-height:1">${fmt(revenue)}₫</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px; color:var(--text3); margin-bottom:4px">Mục tiêu: <strong style="color:var(--text)">${fmt(target)}₫</strong></div>
+          <div style="font-size:13px; color:var(--text3)">${gap > 0 ? `Còn thiếu: <strong style="color:var(--red)">${fmt(gap)}₫</strong>` : `<strong style="color:var(--green)">Vượt target! 🎉</strong>`}</div>
+        </div>
+      </div>
+      
+      <div style="height:12px; background:var(--bg3); border-radius:6px; overflow:hidden; border:1px solid var(--border2)">
+        <div style="height:100%; width:${Math.min(100, (revenue/target*100)||0)}%; background:linear-gradient(90deg, var(--purple), #a855f7); border-radius:6px; transition:width 1s"></div>
+      </div>
+      <div style="margin-top:8px; text-align:right; font-size:12px; font-weight:600; color:var(--purple)">Đạt ${((revenue/target*100)||0).toFixed(1)}%</div>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px">
+      <div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px">
+        <div style="font-size:12px; color:var(--text3); margin-bottom:4px">Tổng Pipeline (Chưa chốt)</div>
+        <div style="font-size:20px; font-weight:700; color:var(--amber)">${fmt(act.filter(c => c.stage !== 'won' && c.stage !== 'lost').reduce((s,c)=>s+(c.price||0),0))}₫</div>
+      </div>
+      <div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px">
+        <div style="font-size:12px; color:var(--text3); margin-bottom:4px">Khách đang chăm sóc</div>
+        <div style="font-size:20px; font-weight:700; color:var(--blue)">${act.filter(c=>c.stage!=='won'&&c.stage!=='lost').length} <span style="font-size:12px; font-weight:400; color:var(--text3)">leads</span></div>
+      </div>
+      <div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px">
+        <div style="font-size:12px; color:var(--text3); margin-bottom:4px">Đã chốt thành công</div>
+        <div style="font-size:20px; font-weight:700; color:var(--green)">${wonDeals.length} <span style="font-size:12px; font-weight:400; color:var(--text3)">deals</span></div>
+      </div>
+      <div style="background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px">
+        <div style="font-size:12px; color:var(--text3); margin-bottom:4px">Tỉ lệ win rate</div>
+        <div style="font-size:20px; font-weight:700; color:var(--purple)">${act.length ? Math.round(wonDeals.length/act.length*100) : 0}%</div>
+      </div>
+    </div>
+  `;
 
-  document.getElementById('dash-alerts').innerHTML = [
-    { c:'urgent', t:'Quá hạn deadline', n: overdue, d:'deals cần cập nhật ngay' },
-    { c:'warning', t:'HOT Leads hôm nay', n: hot, d:'ưu tiên gọi sớm' },
-    { c:'muted', t:'Ngủ đông (>7 ngày)', n: act.filter(c => c.deadlineDays < -7 && c.stage !== 'won').length, d:'không có tương tác' },
-  ].map(a => `<div class="alert-card ${a.c}"><div class="alert-title">${a.t}</div><div class="alert-num">${a.n}</div><div class="alert-desc">${a.d}</div></div>`).join('');
+  document.getElementById('dash-alerts').innerHTML = '';
 
   document.getElementById('dt-pl-count').textContent = '(' + act.filter(c=>c.stage!=='won').length + ')';
   document.getElementById('dt-lb-count').textContent = '(' + wonDeals.filter(c=>c.billStatus!=='PAID').length + ')';
